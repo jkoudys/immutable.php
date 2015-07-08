@@ -1,0 +1,23 @@
+{
+    "name": "qaribou/immutable.php",
+    "type": "library",
+    "description": "Immutable, highly-performant collections, well-suited for functional programming and memory-intensive applications.",
+    "keywords": ["collections", "immutable", "data structures", "splfixedarray", "fp", "functional"],
+    "homepage": "http://github.com/jkoudys/immutable.php",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Joshua Koudys",
+            "email": "josh@qaribou.com"
+            "role": "Developer"
+        }
+    ],
+    "require": {
+        "php": ">=5.4.0"
+    },
+    "autoload": {
+        "psr-4": {
+            "Qaribou\\": "src/"
+        }
+    }
+}
