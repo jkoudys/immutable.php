@@ -22,7 +22,7 @@ class ImmArray implements Iterator, ArrayAccess, Countable, JsonSerializable
 
     public function map(Callable $cb)
     {
-        $ret = new self();
+        $ret = new static();
         $sfa = clone $this->sfa;
 
         foreach ($sfa as $i => $el) {
@@ -35,7 +35,7 @@ class ImmArray implements Iterator, ArrayAccess, Countable, JsonSerializable
 
     public function filter(Callable $cb)
     {
-        $ret = new self();
+        $ret = new static();
         $sfa = clone $this->sfa;
         $count = 0;
 
