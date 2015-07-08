@@ -1,114 +1,184 @@
 <?php
-namespace Qaribou\Functional;
-use Countable, Iterator, ArrayAccess, Exception, InvalidArgumentException;
+namespace Qaribou\Collection;
 
-class ImmArray implements Countable, Iterator, ArrayAccess
+use SplFixedArray;
+use Iterator;
+use ArrayAccess;
+use Countable;
+use JsonSerializable;
+use RuntimeException;
+
+class ImmArray implements Iterator, ArrayAccess, Countable, JsonSerializable
 {
-    private $refImmArray = null;
-    private $delta = [];
-    private $position = 0;
+    // The fixed array
+    private $sfa = null;
 
-    public function __construct($vals, ImmArray $ref = null)
+    /**
+     * Create an immutable array
+     */
+    public function __construct()
     {
-        if (is_array($vals) || $vals instanceof ArrayAccess) {
-            $this->delta = $vals;
-            $this->refImmArray = $ref;
-        } else {
-            throw new InvalidArgumentException('Must be initialized with array or implementation of ArrayAccess');
+    }
+
+    public function map(Callable $cb)
+    {
+        $ret = new self();
+        $sfa = clone $this->sfa;
+
+        foreach ($sfa as $i => $el) {
+            $sfa[$i] = $cb($el, $i);
         }
+
+        $ret->setSplFixedArray($sfa);
+        return $ret;
     }
 
-    public function add($val)
+    public function filter(Callable $cb)
     {
-        return new ImmArray([$val], $this);
-    }
+        $ret = new self();
+        $sfa = clone $this->sfa;
+        $count = 0;
 
-    public function addAll($vals)
-    {
-        if (is_array($vals) || $vals instanceof ArrayAccess) {
-            return new ImmArray($vals, $this);
-        } else {
-            throw new InvalidArgumentException('Requires array or implementation of ArrayAccess');
+        foreach ($sfa as $el) {
+            if ($cb($el)) {
+                $sfa[$count++] = $el;
+            }
         }
+
+        $sfa->setSize($count);
+        $ret->setSplFixedArray($sfa);
+        return $ret;
     }
 
-    /* Countable */
-    public function count()
+    /**
+     * Join a set of strings together.
+     * 
+     * @return string
+     */
+    public function join($token = ',', $secondToken = null)
     {
-        return count($this->refImmArray) + count($this->delta);
-    }
-
-    /* Iterator methods */
-    public function rewind()
-    {
-        $this->position = 0;
-    }
-
-    public function current()
-    {
-        // See if we're checking in the ref
-        if ($this->position < count($this->refImmArray)) {
-            return $this->refImmArray[$this->position];
-        } else {
-            return $this->delta[$this->position - count($this->refImmArray)];
-        }
-    }
-
-    function key()
-    {
-        return $this->position;
-    }
-
-    function next()
-    {
-        ++$this->position;
-    }
-
-    function valid()
-    {
-        return $this->offsetExists($this->position);
-    }
-
-    /* Array methods */
-    public function offsetSet($offset, $value)
-    {
-        throw new Exception('Attempted to mutate immutable array');
-    }
-
-    public function offsetExists($offset)
-    {
-        // Need different behaviour for int indexes vs hashmap
-        if (is_int($offset)) {
-            $refCount = count($this->refImmArray);
-            if ($offset < $refCount) {
-                return $this->refImmArray->offsetExists($offset);
-            } else {
-                return isset($this->delta[$offset - $refCount]);
+        $ret = '';
+        if ($secondToken) {
+            foreach ($this->sfa as $el) {
+                $ret .= $token . $el . $secondToken;
             }
         } else {
-            // If it's a hash, lookup in this array and the chain of references
-            return isset($this->delta[$offset]) || $this->refImmArray->offsetExists($offset);
+            while ($this->sfa->valid()) {
+                $ret .= $el;
+                $this->sfa->next();
+                if ($this->sfa->valid()) {
+                    $ret .= $token;
+                }
+            }
+            $this->sfa->rewind();
         }
+        return $ret;
     }
 
-    public function offsetUnset($offset)
+    public function setSplFixedArray(SplFixedArray $sfa)
     {
-        throw new Exception('Attempted to mutate immutable array');
+        $this->sfa = $sfa;
+    }
+
+    /**
+     * Factory for building ImmArrays from any traversable
+     *
+     * @return ImmArray
+     */
+    public static function fromItems(Traversable $arr)
+    {
+        $ret = new static();
+        $sfa = new SplFixedArray(count($arr));
+        foreach ($arr as $i => $el) {
+            $sfa[$i] = $el;
+        }
+        $ret->setSplFixedArray($sfa);
+
+        return $ret;
+    }
+
+    /**
+     * Build from an array
+     *
+     * @return ImmArray
+     */
+    public static function fromArray(array $arr)
+    {
+        $ret = new static();
+        $ret->setSplFixedArray(SplFixedArray::fromArray($arr));
+
+        return $ret;
+    }
+
+    public function toArray()
+    {
+        return $this->sfa->toArray();
+    }
+
+    /**
+     * Countable
+     */
+    public function count()
+    {
+        return count($this->sfa);
+    }
+
+    /**
+     * Iterator
+     */
+    public function current()
+    {
+        return $this->sfa->current();
+    }
+
+    public function key()
+    {
+        return $this->sfa->key();
+    }
+
+    public function next()
+    {
+        return $this->sfa->next();
+    }
+
+    public function rewind()
+    {
+        return $this->sfa->rewind();
+    }
+
+    public function valid()
+    {
+        return $this->sfa->valid();
+    }
+
+    /**
+     * ArrayAccess
+     */
+    public function offsetExists($offset)
+    {
+        return $this->sfa->offsetExists($offset);
     }
 
     public function offsetGet($offset)
     {
-        if (is_int($offset)) {
-            $refCount = count($this->refImmArray);
-            if ($offset < $refCount) {
-                return $this->refImmArray->offsetGet($offset);
-            } else {
-                return isset($this->delta[$offset - $refCount]) ? $this->delta[$offset - $refCount] : null;
-            }
-        } else {
-            // If it's a hash, lookup in this array and the chain of references
-            return isset($this->delta[$offset]) || $this->refImmArray->offsetExists($offset);
-        }
+        return $this->sfa->offsetGet($offset);
+    }
+
+    public function offsetSet($offset, $value)
+    {
+        throw new RuntimeException('Attempt to mutate immutable ' . __CLASS__ . ' object.');
+    }
+
+    public function offsetUnset($offset)
+    {
+        throw new RuntimeException('Attempt to mutate immutable ' . __CLASS__ . ' object.');
+    }
+
+    /**
+     * JsonSerializable
+     */
+    public function jsonSerialize()
+    {
+        return $this->sfa->toArray();
     }
 }
-
