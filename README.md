@@ -1,38 +1,54 @@
 # immutable.php
 Immutable, highly-performant collections, well-suited for functional programming and memory-intensive applications.
 
+## Basic Usage
+Quickly load from a simple array
 ```
 $polite = ImmArray::fromArray(['set', 'once', 'don\'t', 'mutate']);
 echo $polite->join(' ');
 // => "set once don't mutate"
-
+```
+Map with a callback
+```
 $yelling = $polite->map(function($word) { return strtoupper($word); });
 echo '<ul>', $yelling->join('<li>', '</li>'), '</ul>';
 // => "<ul><li>SET</li><li>ONCE</li><li>DON'T</li><li>MUTATE</li></ul>"
-
+```
+Load big objects
+```
 // Big memory footprint: $fruits is 20MB on PHP5.6
 $fruits = array_merge(array_fill(0, 1000000, 'peach'), array_fill(0, 1000000, 'banana'));
 
 // Small memory footprint: only 1.6MB
 $fruitsImm = ImmArray::fromArray($fruits);
-
+```
+Filter
+```
 // Yes, we have no bananas
 $noBananas = $fruitsImm->filter(function($fruit) { return $fruit !== 'banana'; });
-
-// Array accessible
+```
+Array accessible
+```
 echo $noBananas[5];
 // => "peach"
-
-// Countable
+```
+Countable
+```
 count($noBananas);
 // => 1000000
-
-// Iterable
+```
+Iterable
+```
 foreach($noBananas as $fruit) {
     FruitCart->sell($fruit);
 }
-
-// Even serialize back as json!
+```
+Load from any `Traversable` object
+```
+$vegetables = ImmArray::fromItems($vegetableIterator);
+```
+Even serialize back as json!
+```
 echo json_encode(['name' => 'The Peach Pit', 'type' => 'fruit stand', 'fruits' => $noBananas]);
 // => {"name": "The Peach Pit", "type": "fruit stand", "fruits": ["peach", "peach", .....
 ```
