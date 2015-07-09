@@ -19,7 +19,7 @@ Load big objects
 // Big memory footprint: $fruits is 20MB on PHP5.6
 $fruits = array_merge(array_fill(0, 1000000, 'peach'), array_fill(0, 1000000, 'banana'));
 
-// Small memory footprint: only 1.6MB
+// Small memory footprint: only 12MB
 $fruitsImm = ImmArray::fromArray($fruits);
 ```
 Filter
@@ -93,4 +93,21 @@ The good ol' PHP library has a pile of often useful, generally well-performing, 
 $foo = ImmArray::fromArray([1, 2, 3, 4, 5]);
 echo $foo->map(function($el) { return $el * 2; })->join(', ');
 // => "2, 4, 6, 8, 10"
+```
+
+### Serialize as JSON
+More and more, PHP is being used less for bloated, view-logic heavy applications, and more as a thin data layer that exists to provide business logic against a datasource, and be consumed by a client side or remote application. I've found most of what I write nowadays simply renders to JSON, which I'll load in a React.js or ember application in the browser. In the interest of being nice to JavaScript developers, it's important to send arrays as arrays, not "arraylike" objects which need to have a bunch of `Object.keys` magic used on them.e.g.
+
+```
+$foo = SplFixedArray::fromArray([1, 2, 3]);
+echo json_encode($foo);
+// => {"0":1,"1":2,"2":3}
+```
+
+The internal logic makese sense to a PHP dev here -- you're encoding properties, after all, but this format is undesirable when working in JS. Objects in js are unordered, so you need to loop through a separate counter, and lookup each string property-name by casting the counter back to string, doing a property lookup, and ending the loop once you've reached the length of the object keys. It's a silly PitA we often have to endure, when we'd much rather get back an array in the first place. e.g.
+
+```
+$foo = ImmArray::fromArray([1, 2, 3]);
+echo json_encode($foo);
+// => [1,2,3]
 ```
