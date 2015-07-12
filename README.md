@@ -1,5 +1,5 @@
 # immutable.php
-Immutable, highly-performant collections, well-suited for functional programming and memory-intensive applications. Runs especially fast in PHP7.
+Immutable collections, well-suited for functional programming and memory-intensive applications. Runs especially fast in PHP7.
 
 ## Basic Usage
 Quickly load from a simple array
@@ -153,12 +153,12 @@ echo 'mergeSort: ' . (microtime(true) - $t) . 's', PHP_EOL;
 ```
 On 5.6:
 ```
-map: 0.58751702308655s
-mergeSort: 14.37729716301s
+map: 0.30895709991455s
+mergeSort: 6.610347032547s
 ```
 On 7.0alpha2:
 ```
-map: 0.038204908370972s
-mergeSort: 0.89907002449036s
+map: 0.01442813873291s
+mergeSort: 0.58948588371277s
 ```
-Holy moly! Running on my laptop, running the map function (which executes a callback) is 15x faster on PHP7. Running the stable mergesort algorithm is 16x faster on PHP7. Big maps and sorts will always be expensive, but PHP7 drops what may be a prohibitively expensive 600ms map, to a much more manageable 40ms.
+Holy moly! Running on my laptop, running the map function (which executes a callback) is 21x faster on PHP7. Running the stable mergesort algorithm is 11x faster on PHP7. Big maps and sorts will always be expensive, but PHP7 drops what may be a prohibitively expensive 300ms map, to a much more manageable 14ms.
