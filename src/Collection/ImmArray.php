@@ -1,4 +1,16 @@
 <?php
+/**
+ * The Immutable Array
+ *
+ * This provides special methods for quickly creating an immutable array,
+ * either from any Traversable, or using a C-optimized fromArray() to directly
+ * instantiate from. Also includes methods fundamental to functional
+ * programming, e.g. map, filter, join, and sort.
+ *
+ * @package immutable.php
+ * @author Joshua Koudys <josh@qaribou.com>
+ */
+
 namespace Qaribou\Collection;
 
 use Qaribou\Collection\CallbackHeap;
@@ -10,7 +22,6 @@ use Countable;
 use CallbackFilterIterator;
 use JsonSerializable;
 use RuntimeException;
-use Closure;
 use Traversable;
 
 class ImmArray implements Iterator, ArrayAccess, Countable, JsonSerializable
@@ -25,40 +36,53 @@ class ImmArray implements Iterator, ArrayAccess, Countable, JsonSerializable
     {
     }
 
+    /**
+     * Map elements to a new ImmArray via a callback
+     *
+     * @param Callable $cb Function to map new data
+     * @return ImmArray
+     */
     public function map(Callable $cb)
     {
         $ret = new static();
-        $sfa = clone $this->sfa;
-        $sfa->rewind();
-        iterator_apply($sfa, function($iterator) use ($cb) {
-            $iterator->offsetSet($iterator->key(), $cb($iterator->current()));
-            return true;
-        }, [$sfa]);
-
+        $count = count($this);
+        $sfa = new SplFixedArray($count);
+        foreach ($this->sfa as $i => $el) {
+            $sfa[$i] = $cb($el);
+        }
         $ret->setSplFixedArray($sfa);
         return $ret;
     }
 
+    /**
+     * Filter out elements
+     *
+     * @param Callable $cb Function to filter out on false
+     * @return ImmArray
+     */
     public function filter(Callable $cb)
     {
         $ret = new static();
-        $sfa = clone $this->sfa;
-        $count = 0;
+        $count = count($this->sfa);
+        $sfa = new SplFixedArray($count);
+        $newCount = 0;
 
-        foreach ($sfa as $el) {
+        foreach ($this->sfa as $el) {
             if ($cb($el)) {
-                $sfa[$count++] = $el;
+                $sfa[$newCount++] = $el;
             }
         }
 
-        $sfa->setSize($count);
+        $sfa->setSize($newCount);
         $ret->setSplFixedArray($sfa);
         return $ret;
     }
 
     /**
      * Join a set of strings together.
-     * 
+     *
+     * @param string $token Main token to put between elements
+     * @param string $secondToken If set, $token on left $secondToken on right
      * @return string
      */
     public function join($token = ',', $secondToken = null)
@@ -82,12 +106,37 @@ class ImmArray implements Iterator, ArrayAccess, Countable, JsonSerializable
     }
 
     /**
-     * Return a new sorted ImmArray
+     * Take a slice of the array
      *
-     * @param Closure $cb The sort callback
+     * @param int $begin Start index of slice
+     * @param int $end End index of slice
      * @return ImmArray
      */
-    public function sort(Closure $cb = null)
+    public function slice($begin = 0, $end = null)
+    {
+        if ($begin === 0) {
+            // If 0-indexed, we can do a quick clone + resize to slice
+            $sfa = clone $this->sfa;
+            if ($end) {
+                $sfa->setSize($end);
+            }
+            $ret = new static();
+            $ret->setSplFixedArray($sfa);
+            return $ret;
+        } else if ($begin > 0) {
+            // We're taking a slice starting inside the array
+        } else if ($begin < 0) {
+            // We're starting from the end of the array
+        }
+    }
+
+    /**
+     * Return a new sorted ImmArray
+     *
+     * @param Callable $cb The sort callback
+     * @return ImmArray
+     */
+    public function sort(Callable $cb = null)
     {
         if ($cb) {
             return $this->heapSort($cb);
@@ -225,7 +274,7 @@ class ImmArray implements Iterator, ArrayAccess, Countable, JsonSerializable
      * Efficient for very-large objects, and written without recursion
      * since PHP isn't well optimized for large recursion stacks.
      *
-     * @param Closure $cb The callback for comparison
+     * @param Callable $cb The callback for comparison
      * @return ImmArray
      */
     protected function mergeSort(Callable $cb)
@@ -275,10 +324,10 @@ class ImmArray implements Iterator, ArrayAccess, Countable, JsonSerializable
      * Sort by applying a CallbackHeap and building a new heap
      * Can be efficient for sorting large stored objects.
      *
-     * @param Closure $cb The comparison callback
+     * @param Callable $cb The comparison callback
      * @return ImmArray
      */
-    protected function heapSort(Closure $cb)
+    protected function heapSort(Callable $cb)
     {
         $h = new CallbackHeap($cb);
         foreach ($this as $el) {
@@ -291,10 +340,10 @@ class ImmArray implements Iterator, ArrayAccess, Countable, JsonSerializable
     /**
      * Fallback behaviour to use the builtin array sort functions
      *
-     * @param Closure $cb The callback for comparison
+     * @param Callable $cb The callback for comparison
      * @return ImmArray
      */
-    protected function arraySort(Closure $cb = null)
+    protected function arraySort(Callable $cb = null)
     {
         $ar = $this->toArray();
         if ($cb) {
