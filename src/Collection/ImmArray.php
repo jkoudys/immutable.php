@@ -47,8 +47,8 @@ class ImmArray implements Iterator, ArrayAccess, Countable, JsonSerializable
         $ret = new static();
         $count = count($this);
         $sfa = new SplFixedArray($count);
-        foreach ($this->sfa as $i => $el) {
-            $sfa[$i] = $cb($el);
+        for ($i = 0; $i < $count; $i++) {
+            $sfa[$i] = $cb($this->sfa[$i]);
         }
         $ret->setSplFixedArray($sfa);
         return $ret;
@@ -114,20 +114,39 @@ class ImmArray implements Iterator, ArrayAccess, Countable, JsonSerializable
      */
     public function slice($begin = 0, $end = null)
     {
+        $count = count($this);
+
+        // If no end set, assume whole array
+        if ($end === null) {
+            $end = $count;
+        } else if ($end < 0) {
+            // Ends counting back from start
+            $end = $count + $end;
+        }
+
+        // Negative begin means start from the end
+        if ($begin < 0) {
+            $begin = $count + $begin;
+        }
+
         if ($begin === 0) {
             // If 0-indexed, we can do a quick clone + resize to slice
             $sfa = clone $this->sfa;
             if ($end) {
-                $sfa->setSize($end);
+                // Don't allow slices beyond the end
+                $sfa->setSize(min($end, $count));
             }
-            $ret = new static();
-            $ret->setSplFixedArray($sfa);
-            return $ret;
-        } else if ($begin > 0) {
+        } else {
             // We're taking a slice starting inside the array
-        } else if ($begin < 0) {
-            // We're starting from the end of the array
+            $sfa = new SplFixedArray($end - $begin + 1);
+
+            for ($i = $begin; $i < $end; $i++) {
+                $sfa[$i - $begin] = $this->sfa[$i];
+            }
         }
+        $ret = new static();
+        $ret->setSplFixedArray($sfa);
+        return $ret;
     }
 
     /**
@@ -162,6 +181,12 @@ class ImmArray implements Iterator, ArrayAccess, Countable, JsonSerializable
         return static::fromItems($heap);
     }
 
+    /**
+     * Typically internal method to directly set the SplFixedArray
+     *
+     * @param SplFixedArray $sfa The dataset to set
+     * @return null
+     */
     public function setSplFixedArray(SplFixedArray $sfa)
     {
         $this->sfa = $sfa;

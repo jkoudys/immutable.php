@@ -14,13 +14,23 @@ $numberSet = ImmArray::fromArray([1, 2, 3, 4, 5]);
 // Use a standard function as the callable
 function double($num) { return $num * 2; }
 
+// Join
 echo '<h1>List of items</h1><ul>' . $numberSet->join('<li>', '</li>') . '</ul>', PHP_EOL;
+
+// Map
 echo 'Doubled: ' . $numberSet->map('double')->join(), PHP_EOL;
+
+// Filter
 echo 'Odds: ' . $numberSet->filter(function($num) { return (bool) $num % 2; })->join(), PHP_EOL;
 
+// Sort
 $unsorted = ImmArray::fromArray(['f', 'c', 'a', 'b', 'e', 'd']);
 $sorted = $unsorted->sort(function($a, $b) { return strcmp($a, $b); });
 echo 'Sorted: ' . $sorted->join(', '), PHP_EOL;
+
+// Slice
+$firstThree = $numberSet->slice(0, 3);
+echo 'Sliced: ' . $firstThree->join(), PHP_EOL;
 
 // Big
 $bigSet = ImmArray::fromArray(array_map(function($el) { return md5($el); }, range(0, 100000)));
