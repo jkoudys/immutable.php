@@ -1,5 +1,5 @@
 # immutable.php
-Immutable, highly-performant collections, well-suited for functional programming and memory-intensive applications.
+Immutable, highly-performant collections, well-suited for functional programming and memory-intensive applications. Runs especially fast in PHP7.
 
 ## Basic Usage
 Quickly load from a simple array
@@ -14,6 +14,11 @@ Map with a callback
 $yelling = $polite->map(function($word) { return strtoupper($word); });
 echo '<ul>', $yelling->join('<li>', '</li>'), '</ul>';
 // => "<ul><li>SET</li><li>ONCE</li><li>DON'T</li><li>MUTATE</li></ul>"
+```
+Sort with a callback
+```
+echo 'Os in front: ' . $yelling->sort(function($word) { return (strpos('O', $word) === false) ? 1 : -1; })->join(' ');
+// => "Os in front: ONCE DON'T MUTATE SET"
 ```
 Load big objects
 ```
@@ -133,7 +138,7 @@ $bigSet = ImmArray::fromArray(array_map(function($el) { return md5($el); }, rang
 
 // Time the map function
 $t = microtime(true);
-$mapped = $bigSet->map(function($el) { return '{' . $el . '}; });
+$mapped = $bigSet->map(function($el) { return '{' . $el . '}'; });
 echo 'map: ' . (microtime(true) - $t) . 's', PHP_EOL;
 
 // Time the sort function
@@ -151,4 +156,4 @@ On 7.0alpha2:
 map: 0.038204908370972s
 mergeSort: 0.89907002449036s
 ```
-Holy moly! Mapping the 
+Holy moly! Running on my laptop, running the map function (which executes a callback) is 15x faster on PHP7. Running the stable mergesort algorithm is 16x faster on PHP7. Big maps and sorts will always be expensive, but PHP7 drops what may be a prohibitively expensive 600ms map, to a much more manageable 40ms.
