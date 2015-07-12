@@ -20,6 +20,11 @@ Sort with a callback
 echo 'Os in front: ' . $yelling->sort(function($word) { return (strpos('O', $word) === false) ? 1 : -1; })->join(' ');
 // => "Os in front: ONCE DON'T MUTATE SET"
 ```
+Slice
+```
+echo 'First 2 words only: ' . $polite->slice(0, 2)->join(' ');
+// => "set once"
+```
 Load big objects
 ```
 // Big memory footprint: $fruits is 20MB on PHP5.6

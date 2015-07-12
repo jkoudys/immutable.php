@@ -37,12 +37,12 @@ $bigSet = ImmArray::fromArray(array_map(function($el) { return md5($el); }, rang
 
 // Time the filter function
 $t = microtime(true);
-$filter = $bigSet->filter(function($el) { return strpos($el, 'a8') > -1; });
+$bigSet->filter(function($el) { return strpos($el, 'a8') > -1; });
 echo 'filter: ' . (microtime(true) - $t) . 's', PHP_EOL;
 
 // Time the map function
 $t = microtime(true);
-$mapped = $bigSet->map(function($el) { return '{' . $el . '}'; });
+$bigSet->map(function($el) { return '{' . $el . '}'; });
 echo 'map: ' . (microtime(true) - $t) . 's', PHP_EOL;
 
 // Time the sort function
