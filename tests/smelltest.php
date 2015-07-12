@@ -11,8 +11,11 @@ use Qaribou\Collection\CallbackHeap;
 
 $numberSet = ImmArray::fromArray([1, 2, 3, 4, 5]);
 
+// Use a standard function as the callable
+function double($num) { return $num * 2; }
+
 echo '<h1>List of items</h1><ul>' . $numberSet->join('<li>', '</li>') . '</ul>', PHP_EOL;
-echo 'Doubled: ' . $numberSet->map(function($num) { return $num * 2; })->join(), PHP_EOL;
+echo 'Doubled: ' . $numberSet->map('double')->join(), PHP_EOL;
 echo 'Odds: ' . $numberSet->filter(function($num) { return (bool) $num % 2; })->join(), PHP_EOL;
 
 $unsorted = ImmArray::fromArray(['f', 'c', 'a', 'b', 'e', 'd']);
@@ -22,9 +25,14 @@ echo 'Sorted: ' . $sorted->join(', '), PHP_EOL;
 // Big
 $bigSet = ImmArray::fromArray(array_map(function($el) { return md5($el); }, range(0, 100000)));
 
+// Time the filter function
+$t = microtime(true);
+$filter = $bigSet->filter(function($el) { return strpos($el, 'a8') > -1; });
+echo 'filter: ' . (microtime(true) - $t) . 's', PHP_EOL;
+
 // Time the map function
 $t = microtime(true);
-$mapped = $bigSet->map(function($el) { return $el * $el; });
+$mapped = $bigSet->map(function($el) { return '{' . $el . '}'; });
 echo 'map: ' . (microtime(true) - $t) . 's', PHP_EOL;
 
 // Time the sort function

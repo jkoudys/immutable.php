@@ -8,18 +8,20 @@
  * same comparison, it makes more sense to define it in its own class extending
  * SplHeap. This class is appropriate when you have a set of comparisons to
  * choose from.
+ *
+ * @package immutable.php
+ * @author Joshua Koudys <josh@qaribou.com>
  */
 
 namespace Qaribou\Collection;
 
 use SplHeap;
-use Closure;
 
 class CallbackHeap extends SplHeap
 {
     public $cb;
 
-    public function __construct(Closure $cb)
+    public function __construct(Callable $cb)
     {
         $this->cb = $cb;
     }
