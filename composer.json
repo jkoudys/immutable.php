@@ -2,7 +2,7 @@
     "name": "qaribou/immutable.php",
     "type": "library",
     "description": "Immutable, highly-performant collections, well-suited for functional programming and memory-intensive applications.",
-    "keywords": ["collections", "immutable", "data structures", "splfixedarray", "fp", "functional"],
+    "keywords": ["collections", "immutable", "data structures", "splfixedarray", "fp", "functional", "php7"],
     "homepage": "http://github.com/jkoudys/immutable.php",
     "license": "MIT",
     "authors": [
