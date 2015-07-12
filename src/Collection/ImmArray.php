@@ -158,7 +158,7 @@ class ImmArray implements Iterator, ArrayAccess, Countable, JsonSerializable
     public function sort(Callable $cb = null)
     {
         if ($cb) {
-            return $this->heapSort($cb);
+            return $this->mergeSort($cb);
         } else {
             return $this->arraySort();
         }

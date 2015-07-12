@@ -21,7 +21,7 @@ echo '<h1>List of items</h1><ul>' . $numberSet->join('<li>', '</li>') . '</ul>',
 echo 'Doubled: ' . $numberSet->map('double')->join(), PHP_EOL;
 
 // Filter
-echo 'Odds: ' . $numberSet->filter(function($num) { return (bool) $num % 2; })->join(), PHP_EOL;
+echo 'Odds: ' . $numberSet->filter(function($num) { return $num % 2 !== 0; })->join(), PHP_EOL;
 
 // Sort
 $unsorted = ImmArray::fromArray(['f', 'c', 'a', 'b', 'e', 'd']);
