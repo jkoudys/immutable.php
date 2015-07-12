@@ -4,6 +4,7 @@ Immutable, highly-performant collections, well-suited for functional programming
 ## Basic Usage
 Quickly load from a simple array
 ```
+use Qaribou\Collection\ImmArray;
 $polite = ImmArray::fromArray(['set', 'once', 'don\'t', 'mutate']);
 echo $polite->join(' ');
 // => "set once don't mutate"
@@ -61,7 +62,7 @@ This project was born out of my love for 3 other projects: Hack (http://hacklang
 * SPL has some technically excellent, optimized datastructures, which are often impractical in real world applications.
 
 ## Why didn't I just use SplFixedArray directly?
-The SplFixedArray is very nicely implemented at the low-level, but is often somewhat painful to actually use. Its memory savings vs standard arrays (which are really just variable-sized hashmaps -- the most mutable datastructure I can think of) can be enormous, though perhaps not quite as big a savings as it will be once PHP7 gets here.
+The SplFixedArray is very nicely implemented at the low-level, but is often somewhat painful to actually use. Its memory savings vs standard arrays (which are really just variable-sized hashmaps -- the most mutable datastructure I can think of) can be enormous, though perhaps not quite as big a savings as it will be once PHP7 gets here. By composing an object with the SplFixedArray, we can have a class which solves the usability issues, while maintaining excellent performance.
 
 ### Static-Factory Methods
 The SPL datastructures are all very focused on an inheritance-approach, but I found the compositional approach taken in hacklang collections to be far nicer to work with. Indeed, the collections classes in hack are all `final`, implying that you must build your own datastructures composed of them, so I took the same approach with SPL. The big thing you miss out on with inheritance is the `fromArray` method, which is implemented in C and quite fast, however:
@@ -111,3 +112,43 @@ $foo = ImmArray::fromArray([1, 2, 3]);
 echo json_encode($foo);
 // => [1,2,3]
 ```
+
+### Immutability
+A special interface gives us an appropriate layer to enforce immutability. While the immutable.php datastructures implement `ArrayAccess`, attempts to push or set to them will fail.
+
+```
+$foo = new ImmArray();
+$foo[1] = 'bar';
+// => PHP Warning:  Uncaught exception 'RuntimeException' with message 'Attempt
+to mutate immutable Qaribou\Collection\ImmArray object.' in
+/project/src/Collection/ImmArray.php:169
+```
+
+## PHP7
+It's well-known that callbacks are incredibly slow pre-PHPNG days, but once PHP7 becomes the standard the callback-heavy approach to functional programming needed by immutable.php will become far faster. For example, compare this basic test:
+
+```
+// Make 100,000 random strings
+$bigSet = ImmArray::fromArray(array_map(function($el) { return md5($el); }, range(0, 100000)));
+
+// Time the map function
+$t = microtime(true);
+$mapped = $bigSet->map(function($el) { return '{' . $el . '}; });
+echo 'map: ' . (microtime(true) - $t) . 's', PHP_EOL;
+
+// Time the sort function
+$t = microtime(true);
+$bigSet->sort(function($a, $b) { return strcmp($a, $b); });
+echo 'mergeSort: ' . (microtime(true) - $t) . 's', PHP_EOL;
+```
+On 5.6:
+```
+map: 0.58751702308655s
+mergeSort: 14.37729716301s
+```
+On 7.0alpha2:
+```
+map: 0.038204908370972s
+mergeSort: 0.89907002449036s
+```
+Holy moly! Mapping the 
