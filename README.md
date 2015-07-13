@@ -64,6 +64,12 @@ echo json_encode(['name' => 'The Peach Pit', 'type' => 'fruit stand', 'fruits' =
 // => {"name": "The Peach Pit", "type": "fruit stand", "fruits": ["peach", "peach", .....
 ```
 
+## Install
+immutable.php is available on composer via packagist.
+```
+composer require qaribou/immutable.php
+```
+
 ## Why
 This project was born out of my love for 3 other projects: Hack (http://hacklang.org), immutable.js (https://facebook.github.io/immutable-js/), and the Standard PHP Library (SPL) datastructures (http://php.net/manual/en/spl.datastructures.php).
 
