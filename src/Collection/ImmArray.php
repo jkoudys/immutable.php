@@ -132,7 +132,7 @@ class ImmArray implements Iterator, ArrayAccess, Countable, JsonSerializable
         if ($begin === 0) {
             // If 0-indexed, we can do a quick clone + resize to slice
             $sfa = clone $this->sfa;
-            if ($end) {
+            if ($end < $count) {
                 // Don't allow slices beyond the end
                 $sfa->setSize(min($end, $count));
             }
