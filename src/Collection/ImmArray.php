@@ -55,6 +55,22 @@ class ImmArray implements Iterator, ArrayAccess, Countable, JsonSerializable
     }
 
     /**
+     * forEach, or "walk" the data
+     * Exists primarily to provide a consistent interface, though it's seldom
+     * any better than a simple php foreach. Mainly useful for chaining.
+     *
+     * @param Callable $cb Function to call on each element
+     * @return ImmArray
+     */
+    public function forEach(Callable $cb)
+    {
+        foreach ($this as $i => $el) {
+            $cb($el, $i, $this);
+        }
+        return $this;
+    }
+
+    /**
      * Filter out elements
      *
      * @param Callable $cb Function to filter out on false
