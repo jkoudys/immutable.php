@@ -39,10 +39,10 @@ class ImmArray implements Iterator, ArrayAccess, Countable, JsonSerializable
     /**
      * Map elements to a new ImmArray via a callback
      *
-     * @param Callable $cb Function to map new data
+     * @param callable $cb Function to map new data
      * @return ImmArray
      */
-    public function map(Callable $cb)
+    public function map(callable $cb)
     {
         $ret = new static();
         $count = count($this);
@@ -58,11 +58,12 @@ class ImmArray implements Iterator, ArrayAccess, Countable, JsonSerializable
      * forEach, or "walk" the data
      * Exists primarily to provide a consistent interface, though it's seldom
      * any better than a simple php foreach. Mainly useful for chaining.
+     * Called walk for historic reasons - forEach is reserved in PHP
      *
-     * @param Callable $cb Function to call on each element
+     * @param callable $cb Function to call on each element
      * @return ImmArray
      */
-    public function forEach(Callable $cb)
+    public function walk(callable $cb)
     {
         foreach ($this as $i => $el) {
             $cb($el, $i, $this);
@@ -73,10 +74,10 @@ class ImmArray implements Iterator, ArrayAccess, Countable, JsonSerializable
     /**
      * Filter out elements
      *
-     * @param Callable $cb Function to filter out on false
+     * @param callable $cb Function to filter out on false
      * @return ImmArray
      */
-    public function filter(Callable $cb)
+    public function filter(callable $cb)
     {
         $ret = new static();
         $count = count($this->sfa);
@@ -168,10 +169,10 @@ class ImmArray implements Iterator, ArrayAccess, Countable, JsonSerializable
     /**
      * Return a new sorted ImmArray
      *
-     * @param Callable $cb The sort callback
+     * @param callable $cb The sort callback
      * @return ImmArray
      */
-    public function sort(Callable $cb = null)
+    public function sort(callable $cb = null)
     {
         if ($cb) {
             return $this->mergeSort($cb);
@@ -315,10 +316,10 @@ class ImmArray implements Iterator, ArrayAccess, Countable, JsonSerializable
      * Efficient for very-large objects, and written without recursion
      * since PHP isn't well optimized for large recursion stacks.
      *
-     * @param Callable $cb The callback for comparison
+     * @param callable $cb The callback for comparison
      * @return ImmArray
      */
-    protected function mergeSort(Callable $cb)
+    protected function mergeSort(callable $cb)
     {
         $count = count($this);
         $sfa = $this->sfa;
@@ -365,10 +366,10 @@ class ImmArray implements Iterator, ArrayAccess, Countable, JsonSerializable
      * Sort by applying a CallbackHeap and building a new heap
      * Can be efficient for sorting large stored objects.
      *
-     * @param Callable $cb The comparison callback
+     * @param callable $cb The comparison callback
      * @return ImmArray
      */
-    protected function heapSort(Callable $cb)
+    protected function heapSort(callable $cb)
     {
         $h = new CallbackHeap($cb);
         foreach ($this as $el) {
@@ -381,10 +382,10 @@ class ImmArray implements Iterator, ArrayAccess, Countable, JsonSerializable
     /**
      * Fallback behaviour to use the builtin array sort functions
      *
-     * @param Callable $cb The callback for comparison
+     * @param callable $cb The callback for comparison
      * @return ImmArray
      */
-    protected function arraySort(Callable $cb = null)
+    protected function arraySort(callable $cb = null)
     {
         $ar = $this->toArray();
         if ($cb) {
