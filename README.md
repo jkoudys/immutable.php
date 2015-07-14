@@ -1,72 +1,87 @@
 # immutable.php
+
 Immutable collections, well-suited for functional programming and memory-intensive applications. Runs especially fast in PHP7.
 
 ## Basic Usage
-Quickly load from a simple array
-```
+
+###Quickly load from a simple array
+```php
 use Qaribou\Collection\ImmArray;
 $polite = ImmArray::fromArray(['set', 'once', 'don\'t', 'mutate']);
 echo $polite->join(' ');
 // => "set once don't mutate"
 ```
-Map with a callback
-```
+###Map with a callback
+```php
 $yelling = $polite->map(function($word) { return strtoupper($word); });
 echo '<ul>', $yelling->join('<li>', '</li>'), '</ul>';
 // => "<ul><li>SET</li><li>ONCE</li><li>DON'T</li><li>MUTATE</li></ul>"
 ```
-Sort with a callback
-```
-echo 'Os in front: ' . $yelling->sort(function($word) { return (strpos('O', $word) === false) ? 1 : -1; })->join(' ');
+
+###Sort with a callback
+```phpo
+echo 'Os in front: ' . $yelling
+                            ->sort(function($word) { return (strpos('O', $word) === false) ? 1 : -1; })
+                            ->join(' ');
 // => "Os in front: ONCE DON'T MUTATE SET"
 ```
-Slice
-```
+
+###Slice
+```php
 echo 'First 2 words only: ' . $polite->slice(0, 2)->join(' ');
 // => "set once"
 ```
-Load big objects
-```
+
+###Load big objects
+```php
 // Big memory footprint: $fruits is 20MB on PHP5.6
 $fruits = array_merge(array_fill(0, 1000000, 'peach'), array_fill(0, 1000000, 'banana'));
 
 // Small memory footprint: only 12MB
 $fruitsImm = ImmArray::fromArray($fruits);
 ```
-Filter
-```
+
+###Filter
+```php
 // Yes, we have no bananas
 $noBananas = $fruitsImm->filter(function($fruit) { return $fruit !== 'banana'; });
 ```
-Array accessible
-```
+
+###Array accessible
+```php
 echo $noBananas[5];
 // => "peach"
 ```
-Countable
-```
+
+###Countable
+```php
 count($noBananas);
 // => 1000000
 ```
-Iterable
-```
+
+###Iterable
+```php
 foreach($noBananas as $fruit) {
     FruitCart->sell($fruit);
 }
 ```
+
 Load from any `Traversable` object
-```
+```php
 $vegetables = ImmArray::fromItems($vegetableIterator);
 ```
-Even serialize back as json!
-```
-echo json_encode(['name' => 'The Peach Pit', 'type' => 'fruit stand', 'fruits' => $noBananas]);
+
+###Even serialize back as json!
+```php
+echo json_encode(
+    ['name' => 'The Peach Pit', 'type' => 'fruit stand', 'fruits' => $noBananas]
+);
 // => {"name": "The Peach Pit", "type": "fruit stand", "fruits": ["peach", "peach", .....
 ```
 
 ## Install
 immutable.php is available on composer via packagist.
-```
+```sh
 composer require qaribou/immutable.php
 ```
 
@@ -83,7 +98,7 @@ The SplFixedArray is very nicely implemented at the low-level, but is often some
 ### Static-Factory Methods
 The SPL datastructures are all very focused on an inheritance-approach, but I found the compositional approach taken in hacklang collections to be far nicer to work with. Indeed, the collections classes in hack are all `final`, implying that you must build your own datastructures composed of them, so I took the same approach with SPL. The big thing you miss out on with inheritance is the `fromArray` method, which is implemented in C and quite fast, however:
 
-```
+```php
 class FooFixed extends SplFixedArray {}
 $foo = FooFixed::fromArray([1, 2, 3]);
 echo get_class($foo);
@@ -94,7 +109,7 @@ So you can see that while the static class method `fromArray()` was called from 
 
 ImmArray, however, uses a compositional approach so we can statically bind the factory methods:
 
-```
+```php
 class FooFixed extends ImmArray {}
 $foo = FooFixed::fromArray([1, 2, 3]);
 echo get_class($foo);
@@ -106,7 +121,7 @@ Now that dependency injection, and type-hinting in general, are all the rage, it
 ### De-facto standard array functions
 The good ol' PHP library has a pile of often useful, generally well-performing, but crufty array functions with inconsistent interfaces (e.g. `array_map($callback, $array)` vs `array_walk($array, $callback)`). Dealing with these can be considered one of PHP's quirky little charms. The real problem is, these functions all have one thing in common: your object _must_ be an array. Not arraylike, not ArrayAccessible, not Iterable, not Traversable, etc., but an array. By building in functions so common in JavaScript and elsewhere, e.g. `map()`, `filter()`, and `join()`, one can easily build new immutable arrays by passing a callback to the old one.
 
-```
+```php
 $foo = ImmArray::fromArray([1, 2, 3, 4, 5]);
 echo $foo->map(function($el) { return $el * 2; })->join(', ');
 // => "2, 4, 6, 8, 10"
@@ -115,7 +130,7 @@ echo $foo->map(function($el) { return $el * 2; })->join(', ');
 ### Serialize as JSON
 More and more, PHP is being used less for bloated, view-logic heavy applications, and more as a thin data layer that exists to provide business logic against a datasource, and be consumed by a client side or remote application. I've found most of what I write nowadays simply renders to JSON, which I'll load in a React.js or ember application in the browser. In the interest of being nice to JavaScript developers, it's important to send arrays as arrays, not "arraylike" objects which need to have a bunch of `Object.keys` magic used on them.e.g.
 
-```
+```php
 $foo = SplFixedArray::fromArray([1, 2, 3]);
 echo json_encode($foo);
 // => {"0":1,"1":2,"2":3}
@@ -123,7 +138,7 @@ echo json_encode($foo);
 
 The internal logic makese sense to a PHP dev here -- you're encoding properties, after all, but this format is undesirable when working in JS. Objects in js are unordered, so you need to loop through a separate counter, and lookup each string property-name by casting the counter back to string, doing a property lookup, and ending the loop once you've reached the length of the object keys. It's a silly PitA we often have to endure, when we'd much rather get back an array in the first place. e.g.
 
-```
+```php
 $foo = ImmArray::fromArray([1, 2, 3]);
 echo json_encode($foo);
 // => [1,2,3]
@@ -132,7 +147,7 @@ echo json_encode($foo);
 ### Immutability
 A special interface gives us an appropriate layer to enforce immutability. While the immutable.php datastructures implement `ArrayAccess`, attempts to push or set to them will fail.
 
-```
+```php
 $foo = new ImmArray();
 $foo[1] = 'bar';
 // => PHP Warning:  Uncaught exception 'RuntimeException' with message 'Attempt
@@ -143,7 +158,7 @@ to mutate immutable Qaribou\Collection\ImmArray object.' in
 ## PHP7
 It's well-known that callbacks are incredibly slow pre-PHPNG days, but once PHP7 becomes the standard the callback-heavy approach to functional programming needed by immutable.php will become far faster. For example, compare this basic test:
 
-```
+```php
 // Make 100,000 random strings
 $bigSet = ImmArray::fromArray(array_map(function($el) { return md5($el); }, range(0, 100000)));
 
@@ -158,12 +173,12 @@ $bigSet->sort(function($a, $b) { return strcmp($a, $b); });
 echo 'mergeSort: ' . (microtime(true) - $t) . 's', PHP_EOL;
 ```
 On 5.6:
-```
+```php
 map: 0.30895709991455s
 mergeSort: 6.610347032547s
 ```
 On 7.0alpha2:
-```
+```php
 map: 0.01442813873291s
 mergeSort: 0.58948588371277s
 ```
