@@ -58,7 +58,7 @@ class ImmArray implements Iterator, ArrayAccess, Countable, JsonSerializable
      * forEach, or "walk" the data
      * Exists primarily to provide a consistent interface, though it's seldom
      * any better than a simple php foreach. Mainly useful for chaining.
-     * Called walk for historic reasons - forEach is reserved in PHP
+     * Named walk for historic reasons - forEach is reserved in PHP
      *
      * @param callable $cb Function to call on each element
      * @return ImmArray
@@ -93,6 +93,22 @@ class ImmArray implements Iterator, ArrayAccess, Countable, JsonSerializable
         $sfa->setSize($newCount);
         $ret->setSplFixedArray($sfa);
         return $ret;
+    }
+
+    /**
+     * Reduce to a single value
+     *
+     * @param callable $cb Callback(
+     *     mixed $previous, mixed $current[, mixed $index, mixed $immArray]
+     * ):mixed Callback to run reducing function
+     * @param mixed $initial Initial value for first argument
+     */
+    public function reduce(callable $cb, $initial = null)
+    {
+        foreach ($this->sfa as $i => $el) {
+            $initial = $cb($initial, $el, $i, $this);
+        }
+        return $initial;
     }
 
     /**

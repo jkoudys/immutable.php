@@ -32,8 +32,16 @@ echo 'Sorted: ' . $sorted->join(', '), PHP_EOL;
 $firstThree = $numberSet->slice(0, 3);
 echo 'Sliced: ' . $firstThree->join(), PHP_EOL;
 
+// Reduce
+$summed = $numberSet->reduce(function($last, $cur) { return $last + $cur; }, 0);
+echo 'Reduced (summed): ' . $summed, PHP_EOL;
+$concatted = $sorted->reduce(function($last, $cur, $i) {
+    return $last . '{"'. $i . '":"' . $cur . '"},';
+}, '');
+echo 'Reduced (concat): ' . $concatted, PHP_EOL;
+
 // Big
-$bigSet = ImmArray::fromArray(array_map(function($el) { return md5($el); }, range(0, 100000)));
+$bigSet = ImmArray::fromArray(array_map(function($el) { return md5($el); }, range(0, 200000)));
 
 // Time the filter function
 $t = microtime(true);
@@ -42,8 +50,15 @@ echo 'filter: ' . (microtime(true) - $t) . 's', PHP_EOL;
 
 // Time the map function
 $t = microtime(true);
-$bigSet->map(function($el) { return '{' . $el . '}'; });
-echo 'map: ' . (microtime(true) - $t) . 's', PHP_EOL;
+$mem = memory_get_usage();
+$big = $bigSet->map(function($el) { return '{' . $el . '}'; });
+echo 'ImmArray::map() ' . (microtime(true) - $t) . 's' . ', mem: ' . (memory_get_usage(true) - $mem), PHP_EOL;
+
+$bigArr = $bigSet->toArray();
+$t = microtime(true);
+$mem = memory_get_usage();
+$bog = array_map(function($el) { return '{' . $el . '}'; }, $bigArr);
+echo 'array_map() ' . (microtime(true) - $t) . 's' . ', mem: ' . (memory_get_usage(true) - $mem), PHP_EOL;
 
 // Time the sort function
 $t = microtime(true);
