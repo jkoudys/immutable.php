@@ -20,7 +20,9 @@ echo '<ul>', $yelling->join('<li>', '</li>'), '</ul>';
 
 ###Sort with a callback
 ```phpo
-echo 'Os in front: ' . $yelling->sort(function($word) { return (strpos('O', $word) === false) ? 1 : -1; })->join(' ');
+echo 'Os in front: ' . $yelling
+                            ->sort(function($word) { return (strpos('O', $word) === false) ? 1 : -1; })
+                            ->join(' ');
 // => "Os in front: ONCE DON'T MUTATE SET"
 ```
 
@@ -71,7 +73,9 @@ $vegetables = ImmArray::fromItems($vegetableIterator);
 
 ###Even serialize back as json!
 ```php
-echo json_encode(['name' => 'The Peach Pit', 'type' => 'fruit stand', 'fruits' => $noBananas]);
+echo json_encode(
+    ['name' => 'The Peach Pit', 'type' => 'fruit stand', 'fruits' => $noBananas]
+);
 // => {"name": "The Peach Pit", "type": "fruit stand", "fruits": ["peach", "peach", .....
 ```
 
