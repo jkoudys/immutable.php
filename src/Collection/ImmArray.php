@@ -14,8 +14,11 @@
 namespace Qaribou\Collection;
 
 use Qaribou\Collection\CallbackHeap;
+use Qaribou\Iterator\SliceIterator;
 use SplFixedArray;
 use SplHeap;
+use SplStack;
+use LimitIterator;
 use Iterator;
 use ArrayAccess;
 use Countable;
@@ -50,7 +53,7 @@ class ImmArray implements Iterator, ArrayAccess, Countable, JsonSerializable
         for ($i = 0; $i < $count; $i++) {
             $sfa[$i] = $cb($this->sfa[$i]);
         }
-        $ret->setSplFixedArray($sfa);
+        $ret->setIterator($sfa);
         return $ret;
     }
 
@@ -91,7 +94,7 @@ class ImmArray implements Iterator, ArrayAccess, Countable, JsonSerializable
         }
 
         $sfa->setSize($newCount);
-        $ret->setSplFixedArray($sfa);
+        $ret->setIterator($sfa);
         return $ret;
     }
 
@@ -147,38 +150,9 @@ class ImmArray implements Iterator, ArrayAccess, Countable, JsonSerializable
      */
     public function slice($begin = 0, $end = null)
     {
-        $count = count($this);
-
-        // If no end set, assume whole array
-        if ($end === null) {
-            $end = $count;
-        } else if ($end < 0) {
-            // Ends counting back from start
-            $end = $count + $end;
-        }
-
-        // Negative begin means start from the end
-        if ($begin < 0) {
-            $begin = $count + $begin;
-        }
-
-        if ($begin === 0) {
-            // If 0-indexed, we can do a quick clone + resize to slice
-            $sfa = clone $this->sfa;
-            if ($end < $count) {
-                // Don't allow slices beyond the end
-                $sfa->setSize(min($end, $count));
-            }
-        } else {
-            // We're taking a slice starting inside the array
-            $sfa = new SplFixedArray($end - $begin + 1);
-
-            for ($i = $begin; $i < $end; $i++) {
-                $sfa[$i - $begin] = $this->sfa[$i];
-            }
-        }
+        $it = new SliceIterator($this->sfa, $begin, $end);
         $ret = new static();
-        $ret->setSplFixedArray($sfa);
+        $ret->setIterator($it);
         return $ret;
     }
 
@@ -191,7 +165,13 @@ class ImmArray implements Iterator, ArrayAccess, Countable, JsonSerializable
     public function sort(callable $cb = null)
     {
         if ($cb) {
-            return $this->mergeSort($cb);
+            // Custom searches can be easier on memory, but run absurdly slow
+            // pre PHP7
+            if (PHP_MAJOR_VERSION < 7) {
+                return $this->arraySort($cb);
+            } else {
+                return $this->mergeSort($cb);
+            }
         } else {
             return $this->arraySort();
         }
@@ -217,10 +197,10 @@ class ImmArray implements Iterator, ArrayAccess, Countable, JsonSerializable
     /**
      * Typically internal method to directly set the SplFixedArray
      *
-     * @param SplFixedArray $sfa The dataset to set
+     * @param Iterator $sfa The dataset to set
      * @return null
      */
-    public function setSplFixedArray(SplFixedArray $sfa)
+    public function setIterator(Iterator $sfa)
     {
         $this->sfa = $sfa;
     }
@@ -237,7 +217,7 @@ class ImmArray implements Iterator, ArrayAccess, Countable, JsonSerializable
         foreach ($arr as $i => $el) {
             $sfa[$i] = $el;
         }
-        $ret->setSplFixedArray($sfa);
+        $ret->setIterator($sfa);
 
         return $ret;
     }
@@ -250,7 +230,7 @@ class ImmArray implements Iterator, ArrayAccess, Countable, JsonSerializable
     public static function fromArray(array $arr)
     {
         $ret = new static();
-        $ret->setSplFixedArray(SplFixedArray::fromArray($arr));
+        $ret->setIterator(SplFixedArray::fromArray($arr));
 
         return $ret;
     }
@@ -374,7 +354,84 @@ class ImmArray implements Iterator, ArrayAccess, Countable, JsonSerializable
         }
 
         $imm = new static();
-        $imm->setSplFixedArray($result);
+        $imm->setIterator($result);
+        return $imm;
+    }
+
+    /**
+     * A classic quickSort - great for inplace sorting a big fixed array
+     *
+     * @param callable $cb The callback for comparison
+     * @return ImmArray
+     */
+    protected function quickSort(callable $cb)
+    {
+        $sfa = new SplFixedArray(count($this));
+
+        // Create an auxiliary stack
+        $stack = new SplStack();
+
+        // initialize top of stack
+        // push initial values of l and h to stack
+        $stack->push([0, count($sfa) - 1]);
+
+        $first = true;
+        // Keep popping from stack while is not empty
+        while (!$stack->isEmpty())
+        {
+            // Pop h and l
+            list($lo, $hi) = $stack->pop();
+
+            if ($first) {
+                // Start our partition iterator on the original data
+                $partition = new LimitIterator($this->sfa, $lo, $hi - $lo);
+            } else {
+                $partition = new LimitIterator($sfa, $lo, $hi - $lo);
+            }
+            $ii = $partition->getInnerIterator();
+
+            // Set pivot element at its correct position in sorted array
+            $x = $ii[$hi];
+            $i = ($lo - 1);
+
+            foreach ($partition as $j => $el) {
+                if ($cb($ii[$j], $x) <= 0)
+                {
+                    // Bump up the index of the last low hit, and swap
+                    $i++;
+                    $temp = $sfa[$i];
+                    $sfa[$i] = $el;
+                    $sfa[$j] = $temp;
+                } else if ($first) {
+                    $sfa[$j] = $el;
+                }
+            }
+            $sfa[$hi] = $x;
+            var_dump($sfa);
+            //            exit;
+            // Set the pivot element
+            $pivot = $i + 1;
+            // Swap the last hi with the second-last hi
+            $sfa[$hi] = $sfa[$pivot];
+            $sfa[$pivot] = $x;
+
+            // If there are elements on left side of pivot, then push left
+            // side to stack
+            if ($pivot - 1 > $lo)
+            {
+                $stack->push([$lo, $pivot - 1]);
+            }
+
+            // If there are elements on right side of pivot, then push right
+            // side to stack
+            if ($pivot + 1 < $hi)
+            {
+                $stack->push([$pivot + 1, $hi]);
+            }
+        }
+
+        $imm = new static();
+        $imm->setIterator($sfa);
         return $imm;
     }
 

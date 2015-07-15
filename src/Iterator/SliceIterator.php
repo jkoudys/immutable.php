@@ -64,10 +64,9 @@ class SliceIterator extends LimitIterator implements ArrayAccess, Countable, Jso
      */
     public function rewind()
     {
-        try {
+        // no need to rewind on empty sets
+        if ($this->count > 0) {
             parent::rewind();
-        } catch (OutOfBoundsException $e) {
-            // An out of bounds rewind is exclusively on empty-sets, so do nothing
         }
     }
 
