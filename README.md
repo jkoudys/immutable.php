@@ -19,10 +19,11 @@ echo '<ul>', $yelling->join('<li>', '</li>'), '</ul>';
 ```
 
 ###Sort with a callback
-```phpo
-echo 'Os in front: ' . $yelling
-                            ->sort(function($word) { return (strpos('O', $word) === false) ? 1 : -1; })
-                            ->join(' ');
+```php
+echo 'Os in front: ' .
+    $yelling
+        ->sort(function($word) { return (strpos('O', $word) === false) ? 1 : -1; })
+        ->join(' ');
 // => "Os in front: ONCE DON'T MUTATE SET"
 ```
 
@@ -39,6 +40,13 @@ $fruits = array_merge(array_fill(0, 1000000, 'peach'), array_fill(0, 1000000, 'b
 
 // Small memory footprint: only 12MB
 $fruitsImm = ImmArray::fromArray($fruits);
+
+// Especially big savings for slices -- array_slice() gives a 31MB object
+$range = range(0, 50000);
+$sliceArray = array_slice($range, 0, 30000);
+
+// But this is just 192 _bytes_!
+$immSlice = ImmArray::fromArray($range)->slice(0, 30000);
 ```
 
 ###Filter
