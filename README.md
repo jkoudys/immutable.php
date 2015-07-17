@@ -55,6 +55,16 @@ $immSlice = ImmArray::fromArray($range)->slice(0, 30000);
 $noBananas = $fruitsImm->filter(function($fruit) { return $fruit !== 'banana'; });
 ```
 
+###Concat (aka merge)
+```php
+$ia = ImmArray::fromArray([1,2,3,4]);
+$ib = ImmArray::fromArray([5,6,7,8]);
+
+// Like slice(), it's just a little iterator in-memory
+$ic = $ia->concat($ib);
+// => [1,2,3,4,5,6,7,8]
+```
+
 ###Array accessible
 ```php
 echo $noBananas[5];
@@ -162,6 +172,9 @@ $foo[1] = 'bar';
 to mutate immutable Qaribou\Collection\ImmArray object.' in
 /project/src/Collection/ImmArray.php:169
 ```
+
+### Alternative Iterators
+
 
 ## PHP7
 It's well-known that callbacks are incredibly slow pre-PHPNG days, but once PHP7 becomes the standard the callback-heavy approach to functional programming needed by immutable.php will become far faster. For example, compare this basic test:
