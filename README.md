@@ -45,7 +45,7 @@ $fruitsImm = ImmArray::fromArray($fruits);
 $range = range(0, 50000);
 $sliceArray = array_slice($range, 0, 30000);
 
-// But this is just 192 _bytes_!
+// But this is a 192 _byte_ iterator!
 $immSlice = ImmArray::fromArray($range)->slice(0, 30000);
 ```
 

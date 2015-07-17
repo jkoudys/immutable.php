@@ -15,6 +15,7 @@ namespace Qaribou\Collection;
 
 use Qaribou\Collection\CallbackHeap;
 use Qaribou\Iterator\SliceIterator;
+use Qaribou\Iterator\ConcatIterator;
 use SplFixedArray;
 use SplHeap;
 use SplStack;
@@ -26,6 +27,7 @@ use CallbackFilterIterator;
 use JsonSerializable;
 use RuntimeException;
 use Traversable;
+use ReflectionClass;
 
 class ImmArray implements Iterator, ArrayAccess, Countable, JsonSerializable
 {
@@ -153,6 +155,27 @@ class ImmArray implements Iterator, ArrayAccess, Countable, JsonSerializable
         $it = new SliceIterator($this->sfa, $begin, $end);
         $ret = new static();
         $ret->setIterator($it);
+        return $ret;
+    }
+
+    /**
+     * Concat to the end of this array
+     *
+     * @param Traversable,...
+     * @return ImmArray
+     */
+    public function concat()
+    {
+        $args = func_get_args();
+        array_unshift($args, $this->sfa);
+
+        // Concat this iterator, and variadic args
+        $class = new ReflectionClass('Qaribou\Iterator\ConcatIterator');
+        $concatIt = $class->newInstanceArgs($args);
+
+        // Create as new immutable's iterator
+        $ret = new static();
+        $ret->setIterator($concatIt);
         return $ret;
     }
 
