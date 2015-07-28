@@ -36,9 +36,12 @@ class ImmArray implements Iterator, ArrayAccess, Countable, JsonSerializable
 
     /**
      * Create an immutable array
+     *
+     * @param Traversable $immute Data guaranteed to be immutable
      */
-    public function __construct()
+    private function __construct(Traversable $immute)
     {
+        $this->sfa = $immute;
     }
 
     /**
@@ -49,14 +52,12 @@ class ImmArray implements Iterator, ArrayAccess, Countable, JsonSerializable
      */
     public function map(callable $cb)
     {
-        $ret = new static();
         $count = count($this);
         $sfa = new SplFixedArray($count);
         for ($i = 0; $i < $count; $i++) {
             $sfa[$i] = $cb($this->sfa[$i]);
         }
-        $ret->setIterator($sfa);
-        return $ret;
+        return new static($sfa);
     }
 
     /**
@@ -84,7 +85,6 @@ class ImmArray implements Iterator, ArrayAccess, Countable, JsonSerializable
      */
     public function filter(callable $cb)
     {
-        $ret = new static();
         $count = count($this->sfa);
         $sfa = new SplFixedArray($count);
         $newCount = 0;
@@ -96,8 +96,7 @@ class ImmArray implements Iterator, ArrayAccess, Countable, JsonSerializable
         }
 
         $sfa->setSize($newCount);
-        $ret->setIterator($sfa);
-        return $ret;
+        return new static($sfa);
     }
 
     /**
@@ -153,9 +152,7 @@ class ImmArray implements Iterator, ArrayAccess, Countable, JsonSerializable
     public function slice($begin = 0, $end = null)
     {
         $it = new SliceIterator($this->sfa, $begin, $end);
-        $ret = new static();
-        $ret->setIterator($it);
-        return $ret;
+        return new static($it);
     }
 
     /**
@@ -174,9 +171,7 @@ class ImmArray implements Iterator, ArrayAccess, Countable, JsonSerializable
         $concatIt = $class->newInstanceArgs($args);
 
         // Create as new immutable's iterator
-        $ret = new static();
-        $ret->setIterator($concatIt);
-        return $ret;
+        return new static($concatIt);
     }
 
     /**
@@ -201,6 +196,9 @@ class ImmArray implements Iterator, ArrayAccess, Countable, JsonSerializable
     }
 
     /**
+     *
+
+    /**
      * Sort a new ImmArray by filtering through a heap.
      * Tends to run much faster than array or merge sorts, since you're only
      * sorting the pointers, and the sort function is running in a highly
@@ -218,31 +216,18 @@ class ImmArray implements Iterator, ArrayAccess, Countable, JsonSerializable
     }
 
     /**
-     * Typically internal method to directly set the SplFixedArray
-     *
-     * @param Iterator $sfa The dataset to set
-     * @return null
-     */
-    public function setIterator(Iterator $sfa)
-    {
-        $this->sfa = $sfa;
-    }
-
-    /**
      * Factory for building ImmArrays from any traversable
      *
      * @return ImmArray
      */
     public static function fromItems(Traversable $arr)
     {
-        $ret = new static();
         $sfa = new SplFixedArray(count($arr));
         foreach ($arr as $i => $el) {
             $sfa[$i] = $el;
         }
-        $ret->setIterator($sfa);
 
-        return $ret;
+        return new static($sfa);
     }
 
     /**
@@ -252,10 +237,7 @@ class ImmArray implements Iterator, ArrayAccess, Countable, JsonSerializable
      */
     public static function fromArray(array $arr)
     {
-        $ret = new static();
-        $ret->setIterator(SplFixedArray::fromArray($arr));
-
-        return $ret;
+        return new static(SplFixedArray::fromArray($arr));
     }
 
     public function toArray()
@@ -376,9 +358,7 @@ class ImmArray implements Iterator, ArrayAccess, Countable, JsonSerializable
             }
         }
 
-        $imm = new static();
-        $imm->setIterator($result);
-        return $imm;
+        return new static($sfa);
     }
 
     /**
@@ -453,9 +433,7 @@ class ImmArray implements Iterator, ArrayAccess, Countable, JsonSerializable
             }
         }
 
-        $imm = new static();
-        $imm->setIterator($sfa);
-        return $imm;
+        return new static($imm);
     }
 
     /**
