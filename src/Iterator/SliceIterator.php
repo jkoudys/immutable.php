@@ -115,6 +115,6 @@ class SliceIterator extends LimitIterator implements ArrayAccess, Countable, Jso
 
     public function toArray()
     {
-        return iterator_to_array($this);
+        return iterator_to_array($this, false);
     }
 }
