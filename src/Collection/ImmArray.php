@@ -196,9 +196,6 @@ class ImmArray implements Iterator, ArrayAccess, Countable, JsonSerializable
     }
 
     /**
-     *
-
-    /**
      * Sort a new ImmArray by filtering through a heap.
      * Tends to run much faster than array or merge sorts, since you're only
      * sorting the pointers, and the sort function is running in a highly
@@ -380,8 +377,7 @@ class ImmArray implements Iterator, ArrayAccess, Countable, JsonSerializable
 
         $first = true;
         // Keep popping from stack while is not empty
-        while (!$stack->isEmpty())
-        {
+        while (!$stack->isEmpty()) {
             // Pop h and l
             list($lo, $hi) = $stack->pop();
 
@@ -398,8 +394,7 @@ class ImmArray implements Iterator, ArrayAccess, Countable, JsonSerializable
             $i = ($lo - 1);
 
             foreach ($partition as $j => $el) {
-                if ($cb($ii[$j], $x) <= 0)
-                {
+                if ($cb($ii[$j], $x) <= 0) {
                     // Bump up the index of the last low hit, and swap
                     $i++;
                     $temp = $sfa[$i];
@@ -411,7 +406,7 @@ class ImmArray implements Iterator, ArrayAccess, Countable, JsonSerializable
             }
             $sfa[$hi] = $x;
             var_dump($sfa);
-            //            exit;
+
             // Set the pivot element
             $pivot = $i + 1;
             // Swap the last hi with the second-last hi
@@ -420,15 +415,13 @@ class ImmArray implements Iterator, ArrayAccess, Countable, JsonSerializable
 
             // If there are elements on left side of pivot, then push left
             // side to stack
-            if ($pivot - 1 > $lo)
-            {
+            if ($pivot - 1 > $lo) {
                 $stack->push([$lo, $pivot - 1]);
             }
 
             // If there are elements on right side of pivot, then push right
             // side to stack
-            if ($pivot + 1 < $hi)
-            {
+            if ($pivot + 1 < $hi) {
                 $stack->push([$pivot + 1, $hi]);
             }
         }
