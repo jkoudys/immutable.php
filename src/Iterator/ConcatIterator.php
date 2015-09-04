@@ -26,10 +26,10 @@ class ConcatIterator extends AppendIterator implements ArrayAccess, Countable, J
      *
      * @param Iterator $iterator,... Concat iterators in order
      */
-    public function __construct()
+    public function __construct(Iterator ...$iterators)
     {
         parent::__construct();
-        foreach (func_get_args() as $i => $iterator) {
+        foreach ($iterators as $i => $iterator) {
             if (
                 $iterator instanceof ArrayAccess &&
                 $iterator instanceof Countable
@@ -57,7 +57,7 @@ class ConcatIterator extends AppendIterator implements ArrayAccess, Countable, J
     /**
      * Countable
      */
-    public function count()
+    public function count(): int
     {
         return $this->count;
     }
@@ -65,7 +65,7 @@ class ConcatIterator extends AppendIterator implements ArrayAccess, Countable, J
     /**
      * ArrayAccess
      */
-    public function offsetExists($offset)
+    public function offsetExists($offset): boolean
     {
         return $offset >= 0 && $offset < $this->count;
     }
@@ -95,12 +95,12 @@ class ConcatIterator extends AppendIterator implements ArrayAccess, Countable, J
     /**
      * JsonSerializable
      */
-    public function jsonSerialize()
+    public function jsonSerialize(): array
     {
         return $this->toArray();
     }
 
-    public function toArray()
+    public function toArray(): array
     {
         return iterator_to_array($this, false);
     }
