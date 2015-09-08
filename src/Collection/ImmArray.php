@@ -158,13 +158,13 @@ class ImmArray implements Iterator, ArrayAccess, Countable, JsonSerializable
     /**
      * Concat to the end of this array
      *
-     * @param ImmArray,...
+     * @param ImmArray,... $ias One or more immutable array to concat to end
      * @return ImmArray
      */
-    public function concat(ImmArray ...$args): self
+    public function concat(ImmArray ...$ias): self
     {
         // Create as new immutable's iterator
-        return new static(new ConcatIterator($this, ...$args));
+        return new static(new ConcatIterator($this, ...$ias));
     }
 
     /**
@@ -206,12 +206,18 @@ class ImmArray implements Iterator, ArrayAccess, Countable, JsonSerializable
      */
     public static function fromItems(Traversable $arr): self
     {
-        $sfa = new SplFixedArray(count($arr));
-        foreach ($arr as $i => $el) {
-            $sfa[$i] = $el;
-        }
+        // Easiest if we know the size of the traversable upfront
+        if ($arr instanceof Countable) {
+            $sfa = new SplFixedArray(count($arr));
+            foreach ($arr as $i => $el) {
+                $sfa[$i] = $el;
+            }
 
-        return new static($sfa);
+            return new static($sfa);
+        } else {
+            // We don't know the size, so we'll need to load from array
+            return static::fromArray(iterator_to_array($arr));
+        }
     }
 
     /**
