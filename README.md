@@ -14,8 +14,21 @@ echo $polite->join(' ');
 ###Map with a callback
 ```php
 $yelling = $polite->map(function($word) { return strtoupper($word); });
-echo '<ul>', $yelling->join('<li>', '</li>'), '</ul>';
-// => "<ul><li>SET</li><li>ONCE</li><li>DON'T</li><li>MUTATE</li></ul>"
+
+echo <<<EOT
+<article>
+  <h3>A Wonderful List</h3>
+  <ul>
+    {$yelling->join('<li>', '</li>')}
+  </ul>
+</article>
+
+// => <article>
+// =>   <h3>A Wonderful List</h3>
+// =>   <ul>
+// =>     <li>SET</li><li>ONCE</li><li>DON'T</li><li>MUTATE</li>
+// =>   </ul>
+// => </article>
 ```
 
 ###Sort with a callback
@@ -35,7 +48,7 @@ echo 'First 2 words only: ' . $polite->slice(0, 2)->join(' ');
 
 ###Load big objects
 ```php
-// Big memory footprint: $fruits is 20MB on PHP5.6
+// Big memory footprint: $fruits is 30MB on PHP5.6
 $fruits = array_merge(array_fill(0, 1000000, 'peach'), array_fill(0, 1000000, 'banana'));
 
 // Small memory footprint: only 12MB
@@ -65,26 +78,37 @@ $ic = $ia->concat($ib);
 // => [1,2,3,4,5,6,7,8]
 ```
 
+###Reduce
+```php
+$fruits = ImmArray::fromArray(['peach', 'plum', 'orange']);
+
+$fruits->reduce(function($last, $cur, $i) {
+  return $last . '{"' . $i . '":' . $cur . '"},';
+}, '"My Fruits: ');
+
+// => My Fruits: {"0":"peach"},{"1":"plum"},{"2":"orange"},
+```
+
 ###Array accessible
 ```php
-echo $noBananas[5];
-// => "peach"
+echo $fruits[1];
+// => "plum"
 ```
 
 ###Countable
 ```php
-count($noBananas);
-// => 1000000
+count($fruits);
+// => 3
 ```
 
 ###Iterable
 ```php
-foreach($noBananas as $fruit) {
+foreach($fruits as $fruit) {
     FruitCart->sell($fruit);
 }
 ```
 
-Load from any `Traversable` object
+###Load from any `Traversable` object
 ```php
 $vegetables = ImmArray::fromItems($vegetableIterator);
 ```
