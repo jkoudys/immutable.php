@@ -22,6 +22,7 @@ echo <<<EOT
     {$yelling->join('<li>', '</li>')}
   </ul>
 </article>
+EOT;
 
 // => <article>
 // =>   <h3>A Wonderful List</h3>
