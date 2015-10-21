@@ -97,9 +97,9 @@ class ImmArrayTest extends PHPUnit_Framework_TestCase
         $startMem = ini_get('memory_limit');
         ini_set('memory_limit', '50M');
         // Big
-        $bigSet = ImmArray::fromArray(array_map(function($el) { return md5($el); }, range(0, 200000)));
+        $bigSet = ImmArray::fromItems(new MD5Iterator(200000));
 
-        $this->assertCount(200001, $bigSet);
+        $this->assertCount(200000, $bigSet);
         ini_set('memory_limit', $startMem);
     }
 }
@@ -110,5 +110,33 @@ class BasicHeap extends \SplHeap
     public function compare($a, $b)
     {
         return strcmp($a, $b);
+    }
+}
+
+// A basic iterator for testing loading large sets
+class MD5Iterator implements Iterator, Countable {
+    protected $count;
+    protected $position = 0;
+
+    public function __construct($count = 0) {
+        $this->count = $count;
+    }
+    function rewind() {
+        $this->position = 0;
+    }
+    function current() {
+        return md5($this->position);
+    }
+    function key() {
+        return $this->position;
+    }
+    function next() {
+        ++$this->position;
+    }
+    function valid() {
+        return $this->position < $this->count;
+    }
+    function count() {
+        return $this->count;
     }
 }
