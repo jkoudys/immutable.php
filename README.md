@@ -104,8 +104,8 @@ count($fruits);
 
 ###Iterable
 ```php
-foreach($fruits as $fruit) {
-    FruitCart->sell($fruit);
+foreach ($fruits as $fruit) {
+    $fruitCart->sell($fruit);
 }
 ```
 
