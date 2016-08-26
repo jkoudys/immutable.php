@@ -426,7 +426,7 @@ class ImmArray implements Iterator, ArrayAccess, Countable, JsonSerializable
             }
         }
 
-        return new static($imm);
+        return new static($sfa);
     }
 
     /**
