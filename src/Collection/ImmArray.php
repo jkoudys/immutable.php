@@ -405,7 +405,6 @@ class ImmArray implements Iterator, ArrayAccess, Countable, JsonSerializable
                 }
             }
             $sfa[$hi] = $x;
-            var_dump($sfa);
 
             // Set the pivot element
             $pivot = $i + 1;
