@@ -187,12 +187,10 @@ class ImmArray implements Iterator, ArrayAccess, Countable, JsonSerializable
             // pre PHP7
             if (PHP_MAJOR_VERSION < 7) {
                 return $this->arraySort($cb);
-            } else {
-                return $this->mergeSort($cb);
             }
-        } else {
-            return $this->arraySort();
+            return $this->mergeSort($cb);
         }
+        return $this->arraySort();
     }
 
     /**
@@ -219,12 +217,18 @@ class ImmArray implements Iterator, ArrayAccess, Countable, JsonSerializable
      */
     public static function fromItems(Traversable $arr)
     {
-        $sfa = new SplFixedArray(count($arr));
-        foreach ($arr as $i => $el) {
-            $sfa[$i] = $el;
+        // We can only do it this way if we can count it
+        if ($arr instanceof Countable) {
+            $sfa = new SplFixedArray(count($arr));
+            foreach ($arr as $i => $el) {
+                $sfa[$i] = $el;
+            }
+
+            return new static($sfa);
         }
 
-        return new static($sfa);
+        // If we can't count it, it's simplest to iterate into an array first
+        return static::fromArray(iterator_to_array($arr));
     }
 
     /**
@@ -400,7 +404,7 @@ class ImmArray implements Iterator, ArrayAccess, Countable, JsonSerializable
                     $temp = $sfa[$i];
                     $sfa[$i] = $el;
                     $sfa[$j] = $temp;
-                } else if ($first) {
+                } elseif ($first) {
                     $sfa[$j] = $el;
                 }
             }
