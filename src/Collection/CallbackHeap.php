@@ -21,7 +21,7 @@ class CallbackHeap extends SplHeap
 {
     public $cb;
 
-    public function __construct(Callable $cb)
+    public function __construct(callable $cb)
     {
         $this->cb = $cb;
     }
@@ -31,5 +31,3 @@ class CallbackHeap extends SplHeap
         return call_user_func($this->cb, $a, $b);
     }
 }
-
-
