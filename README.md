@@ -90,6 +90,17 @@ $fruits->reduce(function($last, $cur, $i) {
 // => My Fruits: {"0":"peach"},{"1":"plum"},{"2":"orange"},
 ```
 
+###Find
+```php
+$fruits = ImmArray::fromArray(['peach', 'plum', 'banana', 'orange']);
+
+$fruitILike = $fruits->find(function ($fruit) {
+  return $fruit === 'plum' || $fruit === 'orange';
+});
+
+// => 'plum'
+```
+
 ###Array accessible
 ```php
 echo $fruits[1];

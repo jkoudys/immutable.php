@@ -175,6 +175,19 @@ class ImmArray implements Iterator, ArrayAccess, Countable, JsonSerializable
     }
 
     /**
+     * Find a single element
+     *
+     * @param callable $cb The test to run on each element
+     * @return mixed The element we found
+     */
+    public function find(callable $cb)
+    {
+        foreach ($this->sfa as $i => $el) {
+            if ($cb($el, $i, $this)) return $el;
+        }
+    }
+
+    /**
      * Return a new sorted ImmArray
      *
      * @param callable $cb The sort callback
