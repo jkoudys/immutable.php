@@ -55,7 +55,7 @@ class ImmArray implements Iterator, ArrayAccess, Countable, JsonSerializable
         $count = count($this);
         $sfa = new SplFixedArray($count);
         for ($i = 0; $i < $count; $i++) {
-            $sfa[$i] = $cb($this->sfa[$i]);
+            $sfa[$i] = $cb($this->sfa[$i], $i, $this);
         }
         return new static($sfa);
     }
