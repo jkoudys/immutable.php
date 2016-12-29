@@ -21,6 +21,22 @@ class ImmArrayTest extends PHPUnit_Framework_TestCase
         }
     }
 
+    public function testMapWithMultipleInput()
+    {
+        $base = [0, 1, 2, 3, 4];
+        $cube = [0**3, 1**3, 2**3, 3**3, 4**3];
+
+        $numberSet = ImmArray::fromArray($base);
+        $mapped = $numberSet->map(function($l, $w, $h) {
+
+            return $l * $w * $h;
+        }, $base, $base);
+
+        foreach ($mapped as $i => $v) {
+            $this->assertEquals($v, $cube[$i]);
+        }
+    }
+
     public function testJoin()
     {
         $imarr = ImmArray::fromArray(['foo', 'bar', 'baz']);

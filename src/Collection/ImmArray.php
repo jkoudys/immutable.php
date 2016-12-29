@@ -50,12 +50,13 @@ class ImmArray implements Iterator, ArrayAccess, Countable, JsonSerializable
      * @param callable $cb Function to map new data
      * @return ImmArray
      */
-    public function map(callable $cb)
+    public function map(callable $cb, array ...$arrays)
     {
         $count = count($this);
         $sfa = new SplFixedArray($count);
         for ($i = 0; $i < $count; $i++) {
-            $sfa[$i] = $cb($this->sfa[$i], $i, $this);
+            $input = array_column($arrays, $i);
+            $sfa[$i] = $cb($this->sfa[$i], ...$input);
         }
         return new static($sfa);
     }
