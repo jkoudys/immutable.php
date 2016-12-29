@@ -37,6 +37,18 @@ class ImmArrayTest extends PHPUnit_Framework_TestCase
         }
     }
 
+    public function testMapWithInputArraysOfDifferentLength()
+    {
+        $base = [0, 1, 2, 3, 4];
+        $short = [0, 1];
+        $mapped = array_map(function($base, $short){return $short;}, $base, $short);
+        $numberSet = ImmArray::fromArray($base);
+        $immMapped = $numberSet->map(function($base, $short){return $short;}, $short);
+        foreach ($mapped as $i => $v) {
+            $this->assertEquals($v, $immMapped[$i]);
+        }
+    }
+
     public function testJoin()
     {
         $imarr = ImmArray::fromArray(['foo', 'bar', 'baz']);
