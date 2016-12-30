@@ -28,7 +28,6 @@ class ImmArrayTest extends PHPUnit_Framework_TestCase
 
         $numberSet = ImmArray::fromArray($base);
         $mapped = $numberSet->map(function($l, $w, $h) {
-
             return $l * $w * $h;
         }, $base, $base);
 
@@ -41,11 +40,13 @@ class ImmArrayTest extends PHPUnit_Framework_TestCase
     {
         $base = [0, 1, 2, 3, 4];
         $short = [0, 1];
+
         $cb = function ($base, $short) {
-            return $short;
+            return $base * $short;
         };
         $arrMapped = array_map($cb, $base, $short);
         $immMapped = ImmArray::fromArray($base)->map($cb, $short);
+
         foreach ($arrMapped as $i => $v) {
             $this->assertEquals($v, $immMapped[$i]);
         }
