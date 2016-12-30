@@ -52,13 +52,7 @@ class ImmArray implements Iterator, ArrayAccess, Countable, JsonSerializable
      */
     public function map(callable $cb, array ...$arrays)
     {
-        $count = count($this);
-        $sfa = new SplFixedArray($count);
-        for ($i = 0; $i < $count; $i++) {
-            $input = array_column($arrays, $i);
-            $sfa[$i] = $cb($this->sfa[$i], ...$input);
-        }
-        return new static($sfa);
+        return self::fromArray(array_map($cb, $this->toArray(), ...$arrays));
     }
 
     /**
