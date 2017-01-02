@@ -51,7 +51,7 @@ class ImmArray implements Iterator, ArrayAccess, Countable, JsonSerializable
      * @param \array[] $arrays
      * @return ImmArray
      */
-    public function map(callable $cb, array ...$arrays)
+    public function map(callable $cb, ...$arrays)
     {
         return static::fromArray(array_map($cb, $this->toArray(), ...$arrays));
     }
