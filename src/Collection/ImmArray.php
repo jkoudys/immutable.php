@@ -45,15 +45,20 @@ class ImmArray implements Iterator, ArrayAccess, Countable, JsonSerializable
     }
 
     /**
-     * Map elements to a new ImmArray via a callback
+     * Map elements to a new ImmArray via a callback, multiple additional arguments can be added to the callback,
+     * just like php's native array_map function.
      *
      * @param callable $cb Function to map new data
-     * @param \array[] $arrays
+     * @param array $array2
+     *
      * @return ImmArray
      */
-    public function map(callable $cb, ...$arrays)
+    public function map(callable $cb, array $array2 = [])
     {
-        return static::fromArray(array_map($cb, $this->toArray(), ...$arrays));
+        $args = func_get_args();
+        array_shift($args);
+
+        return static::fromArray(call_user_func_array('array_map', array_merge([$cb], [$this->toArray()], $args)));
     }
 
     /**
