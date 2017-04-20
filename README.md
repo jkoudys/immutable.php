@@ -4,14 +4,14 @@ Immutable collections, well-suited for functional programming and memory-intensi
 
 ## Basic Usage
 
-###Quickly load from a simple array
+### Quickly load from a simple array
 ```php
 use Qaribou\Collection\ImmArray;
 $polite = ImmArray::fromArray(['set', 'once', 'don\'t', 'mutate']);
 echo $polite->join(' ');
 // => "set once don't mutate"
 ```
-###Map with a callback
+### Map with a callback
 ```php
 $yelling = $polite->map(function($word) { return strtoupper($word); });
 
@@ -32,7 +32,7 @@ EOT;
 // => </article>
 ```
 
-###Sort with a callback
+### Sort with a callback
 ```php
 echo 'Os in front: ' .
     $yelling
@@ -41,13 +41,13 @@ echo 'Os in front: ' .
 // => "Os in front: ONCE DON'T MUTATE SET"
 ```
 
-###Slice
+### Slice
 ```php
 echo 'First 2 words only: ' . $polite->slice(0, 2)->join(' ');
 // => "set once"
 ```
 
-###Load big objects
+### Load big objects
 ```php
 // Big memory footprint: $fruits is 30MB on PHP5.6
 $fruits = array_merge(array_fill(0, 1000000, 'peach'), array_fill(0, 1000000, 'banana'));
@@ -63,13 +63,13 @@ $sliceArray = array_slice($range, 0, 30000);
 $immSlice = ImmArray::fromArray($range)->slice(0, 30000);
 ```
 
-###Filter
+### Filter
 ```php
 // Yes, we have no bananas
 $noBananas = $fruitsImm->filter(function($fruit) { return $fruit !== 'banana'; });
 ```
 
-###Concat (aka merge)
+### Concat (aka merge)
 ```php
 $ia = ImmArray::fromArray([1,2,3,4]);
 $ib = ImmArray::fromArray([5,6,7,8]);
@@ -79,7 +79,7 @@ $ic = $ia->concat($ib);
 // => [1,2,3,4,5,6,7,8]
 ```
 
-###Reduce
+### Reduce
 ```php
 $fruits = ImmArray::fromArray(['peach', 'plum', 'orange']);
 
@@ -90,7 +90,7 @@ $fruits->reduce(function($last, $cur, $i) {
 // => My Fruits: {"0":"peach"},{"1":"plum"},{"2":"orange"},
 ```
 
-###Find
+### Find
 ```php
 $fruits = ImmArray::fromArray(['peach', 'plum', 'banana', 'orange']);
 
@@ -101,31 +101,31 @@ $fruitILike = $fruits->find(function ($fruit) {
 // => 'plum'
 ```
 
-###Array accessible
+### Array accessible
 ```php
 echo $fruits[1];
 // => "plum"
 ```
 
-###Countable
+### Countable
 ```php
 count($fruits);
 // => 3
 ```
 
-###Iterable
+### Iterable
 ```php
 foreach ($fruits as $fruit) {
     $fruitCart->sell($fruit);
 }
 ```
 
-###Load from any `Traversable` object
+### Load from any `Traversable` object
 ```php
 $vegetables = ImmArray::fromItems($vegetableIterator);
 ```
 
-###Even serialize back as json!
+### Even serialize back as json!
 ```php
 echo json_encode(
     ['name' => 'The Peach Pit', 'type' => 'fruit stand', 'fruits' => $noBananas]
