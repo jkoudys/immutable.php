@@ -65,6 +65,18 @@ class ImmArrayTest extends PHPUnit_Framework_TestCase
         $this->assertSame([1, 2, 3], $firstThree->toArray());
     }
 
+    public function testFromItemsMap()
+    {
+      $numberSet = ImmArray::fromItems(
+        new ArrayIterator([1, 2, 3]),
+        function ($el) {
+          return $el * 2;
+        }
+      );
+
+      $this->assertSame([2, 4, 6], $numberSet->toArray());
+    }
+
     public function testReduce()
     {
         $arIt = new ArrayIterator([1, 2, 3, 4, 5]);

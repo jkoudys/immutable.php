@@ -228,20 +228,26 @@ class ImmArray implements Iterator, ArrayAccess, Countable, JsonSerializable
      *
      * @return ImmArray
      */
-    public static function fromItems(Traversable $arr)
+    public static function fromItems(Traversable $arr, callable $cb = null)
     {
         // We can only do it this way if we can count it
         if ($arr instanceof Countable) {
             $sfa = new SplFixedArray(count($arr));
             foreach ($arr as $i => $el) {
-                $sfa[$i] = $el;
+                // Apply a mapping function if available
+                if ($cb) $sfa[$i] = $cb($el, $i);
+                else $sfa[$i] = $el;
             }
 
             return new static($sfa);
         }
 
         // If we can't count it, it's simplest to iterate into an array first
-        return static::fromArray(iterator_to_array($arr));
+        $asArray = iterator_to_array($arr);
+        if ($cb) {
+          return static::fromArray(array_map($cb, $asArray, array_keys($asArray)));
+        }
+        return static::fromArray($asArray);
     }
 
     /**
