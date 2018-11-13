@@ -484,4 +484,36 @@ class ImmArray implements Iterator, ArrayAccess, Countable, JsonSerializable
         }
         return static::fromArray($ar);
     }
+    
+    /**
+     * Checks if element exists in collection
+     *
+     * @param $element
+     * @param bool $strict use strict comparison?
+     * @return bool
+     */
+    public function has($element, $strict = false)
+    {
+        return \in_array($element, $this->toArray(), strict);
+    }
+    
+    /**
+     * Filter out non-unique elements
+     *
+     * @param bool $strict use strict comparison?
+     * @return ImmArray
+     */
+    public function unique($strict = false)
+    {
+        $count = count($this->sfa);
+        $sfa = new SplFixedArray($count);
+        $newCount = 0;
+        foreach ($this->sfa as $el) {
+            if ($sfa->has($el, $strict) === false) {
+                $sfa[$newCount++] = $el;
+            }
+        }
+        $sfa->setSize($newCount);
+        return new static($sfa);
+    }
 }
