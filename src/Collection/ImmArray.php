@@ -45,7 +45,7 @@ class ImmArray implements Iterator, ArrayAccess, Countable, JsonSerializable
      * Map elements to a new ImmArray via a callback
      *
      * @param callable $cb Function to map new data
-     * @return ImmArray
+     * @return static
      */
     public function map(callable $cb)
     {
@@ -64,7 +64,7 @@ class ImmArray implements Iterator, ArrayAccess, Countable, JsonSerializable
      * Named walk for historic reasons - forEach is reserved in PHP
      *
      * @param callable $cb Function to call on each element
-     * @return ImmArray
+     * @return static
      */
     public function walk(callable $cb)
     {
@@ -78,7 +78,7 @@ class ImmArray implements Iterator, ArrayAccess, Countable, JsonSerializable
      * Filter out elements
      *
      * @param callable $cb Function to filter out on false
-     * @return ImmArray
+     * @return static
      */
     public function filter(callable $cb)
     {
@@ -144,7 +144,7 @@ class ImmArray implements Iterator, ArrayAccess, Countable, JsonSerializable
      *
      * @param int $begin Start index of slice
      * @param int $end End index of slice
-     * @return ImmArray
+     * @return static
      */
     public function slice($begin = 0, $end = null)
     {
@@ -156,7 +156,7 @@ class ImmArray implements Iterator, ArrayAccess, Countable, JsonSerializable
      * Concat to the end of this array
      *
      * @param Traversable,...
-     * @return ImmArray
+     * @return static
      */
     public function concat()
     {
@@ -188,7 +188,7 @@ class ImmArray implements Iterator, ArrayAccess, Countable, JsonSerializable
      * Return a new sorted ImmArray
      *
      * @param callable $cb The sort callback
-     * @return ImmArray
+     * @return static
      */
     public function sort(callable $cb = null)
     {
@@ -210,7 +210,7 @@ class ImmArray implements Iterator, ArrayAccess, Countable, JsonSerializable
      * optimized space.
      *
      * @param SplHeap $heap The heap to run for sorting
-     * @return ImmArray
+     * @return static
      */
     public function sortHeap(SplHeap $heap)
     {
@@ -223,7 +223,7 @@ class ImmArray implements Iterator, ArrayAccess, Countable, JsonSerializable
     /**
      * Factory for building ImmArrays from any traversable
      *
-     * @return ImmArray
+     * @return static
      */
     public static function fromItems(Traversable $arr, callable $cb = null)
     {
@@ -250,7 +250,7 @@ class ImmArray implements Iterator, ArrayAccess, Countable, JsonSerializable
     /**
      * Build from an array
      *
-     * @return ImmArray
+     * @return static
      */
     public static function fromArray(array $arr)
     {
@@ -335,7 +335,7 @@ class ImmArray implements Iterator, ArrayAccess, Countable, JsonSerializable
      * since PHP isn't well optimized for large recursion stacks.
      *
      * @param callable $cb The callback for comparison
-     * @return ImmArray
+     * @return static
      */
     protected function mergeSort(callable $cb)
     {
@@ -382,7 +382,7 @@ class ImmArray implements Iterator, ArrayAccess, Countable, JsonSerializable
      * A classic quickSort - great for inplace sorting a big fixed array
      *
      * @param callable $cb The callback for comparison
-     * @return ImmArray
+     * @return static
      */
     protected function quickSort(callable $cb)
     {
@@ -453,7 +453,7 @@ class ImmArray implements Iterator, ArrayAccess, Countable, JsonSerializable
      * Can be efficient for sorting large stored objects.
      *
      * @param callable $cb The comparison callback
-     * @return ImmArray
+     * @return static
      */
     protected function heapSort(callable $cb)
     {
@@ -469,7 +469,7 @@ class ImmArray implements Iterator, ArrayAccess, Countable, JsonSerializable
      * Fallback behaviour to use the builtin array sort functions
      *
      * @param callable $cb The callback for comparison
-     * @return ImmArray
+     * @return static
      */
     protected function arraySort(callable $cb = null)
     {
@@ -499,7 +499,7 @@ class ImmArray implements Iterator, ArrayAccess, Countable, JsonSerializable
     /**
      * Filter out non-unique elements
      *
-     * @return ImmArray
+     * @return static
      */
     public function unique()
     {

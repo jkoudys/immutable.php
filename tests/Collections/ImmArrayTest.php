@@ -51,7 +51,7 @@ class ImmArrayTest extends \PHPUnit_Framework_TestCase
 
         // Heap sort
         $heapSorted = $unsorted->sortHeap(new BasicHeap());
-        $this->assertSame($sorted->toArray(), ['a', 'b', 'c', 'd', 'e', 'f'], 'Heap sort failed.');
+        $this->assertSame($heapSorted->toArray(), ['a', 'b', 'c', 'd', 'e', 'f'], 'Heap sort failed.');
     }
 
     public function testSlice()
