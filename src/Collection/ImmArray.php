@@ -506,10 +506,12 @@ class ImmArray implements Iterator, ArrayAccess, Countable, JsonSerializable
         $count = count($this->sfa);
         $unique = new SplFixedArray($count);
         $newCount = 0;
+        $lastUnique = null;
 
         foreach ($this->sfa as $el) {
-            foreach ($unique as $uel) {
-                if ($el === $uel) {
+            for($i = $newCount; $i >= 0; $i--) {
+                // going from back to forward to find sequence of duplicates faster
+                if ($unique[$i] === $el) {
                     continue 2;
                 }
             }
