@@ -13,9 +13,7 @@
 
 namespace Qaribou\Collection;
 
-use Qaribou\Collection\CallbackHeap;
 use Qaribou\Iterator\SliceIterator;
-use Qaribou\Iterator\ConcatIterator;
 use SplFixedArray;
 use SplHeap;
 use SplStack;
@@ -23,7 +21,6 @@ use LimitIterator;
 use Iterator;
 use ArrayAccess;
 use Countable;
-use CallbackFilterIterator;
 use JsonSerializable;
 use RuntimeException;
 use Traversable;
@@ -484,36 +481,42 @@ class ImmArray implements Iterator, ArrayAccess, Countable, JsonSerializable
         }
         return static::fromArray($ar);
     }
-    
+
     /**
-     * Checks if element exists in collection
+     * Check if element exists in collection
      *
      * @param $element
-     * @param bool $strict use strict comparison?
      * @return bool
      */
-    public function has($element, $strict = false)
+    public function includes($element)
     {
-        return \in_array($element, $this->toArray(), strict);
+        foreach ($this as $el) {
+            if ($el === $element) return true;
+        }
+        return false;
     }
-    
+
     /**
      * Filter out non-unique elements
      *
-     * @param bool $strict use strict comparison?
      * @return ImmArray
      */
-    public function unique($strict = false)
+    public function unique()
     {
         $count = count($this->sfa);
-        $sfa = new SplFixedArray($count);
+        $unique = new SplFixedArray($count);
         $newCount = 0;
+
         foreach ($this->sfa as $el) {
-            if ($sfa->has($el, $strict) === false) {
-                $sfa[$newCount++] = $el;
+            foreach ($unique as $uel) {
+                if ($el === $uel) {
+                    continue 2;
+                }
             }
+            $unique[$newCount++] = $el;
         }
-        $sfa->setSize($newCount);
-        return new static($sfa);
+
+        $unique->setSize($newCount);
+        return new static($unique);
     }
 }

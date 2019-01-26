@@ -4,9 +4,8 @@
  */
 
 use Qaribou\Collection\ImmArray;
-use Qaribou\Collection\CallbackHeap;
 
-class ImmArrayTest extends PHPUnit_Framework_TestCase
+class ImmArrayTest extends \PHPUnit_Framework_TestCase
 {
     public function testMap()
     {
@@ -102,6 +101,55 @@ class ImmArrayTest extends PHPUnit_Framework_TestCase
         $concatted = $setA->concat($setB);
 
         $this->assertSame([1, 2, 3, 4, 5, 6], $concatted->toArray());
+    }
+
+    public function testIncludes()
+    {
+        $testClass = new \stdClass();
+
+        $set = ImmArray::fromArray([1, 'string', false, $testClass]);
+
+        $this->assertFalse($set->includes(0));
+        $this->assertFalse($set->includes(true));
+        $this->assertTrue($set->includes(1));
+        $this->assertTrue($set->includes(false));
+        $this->assertTrue($set->includes('string'));
+        $this->assertTrue($set->includes($testClass));
+        $this->assertfalse($set->includes(new \stdClass()));
+    }
+
+    public function testUnique()
+    {
+        $testClass = new \stdClass();
+        $testClass2 = new \stdClass();
+
+        $set = ImmArray::fromArray([
+            1,
+            ['foo' => 'bar'],
+            [],
+            'a',
+            'b',
+            $testClass,
+            'a',
+            [],
+            $testClass,
+            ['foo' => 'bar'],
+            $testClass2,
+            'c'
+        ]);
+
+        $uniqueArray = [
+            1,
+            ['foo' => 'bar'],
+            [],
+            'a',
+            'b',
+            $testClass,
+            $testClass2,
+            'c'
+        ];
+
+        $this->assertSame($uniqueArray, $set->unique()->toArray());
     }
 
     public function testLoadBigSet()
