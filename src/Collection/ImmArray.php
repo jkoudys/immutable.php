@@ -14,6 +14,7 @@
 namespace Qaribou\Collection;
 
 use Qaribou\Iterator\SliceIterator;
+use Qaribou\Iterator\ConcatIterator;
 use SplFixedArray;
 use SplHeap;
 use SplStack;
@@ -24,7 +25,6 @@ use Countable;
 use JsonSerializable;
 use RuntimeException;
 use Traversable;
-use ReflectionClass;
 
 class ImmArray implements Iterator, ArrayAccess, Countable, JsonSerializable
 {
@@ -47,7 +47,7 @@ class ImmArray implements Iterator, ArrayAccess, Countable, JsonSerializable
      * @param callable $cb Function to map new data
      * @return static
      */
-    public function map(callable $cb)
+    public function map(callable $cb): self
     {
         $count = count($this);
         $sfa = new SplFixedArray($count);
@@ -66,7 +66,7 @@ class ImmArray implements Iterator, ArrayAccess, Countable, JsonSerializable
      * @param callable $cb Function to call on each element
      * @return static
      */
-    public function walk(callable $cb)
+    public function walk(callable $cb): self
     {
         foreach ($this as $i => $el) {
             $cb($el, $i, $this);
@@ -80,7 +80,7 @@ class ImmArray implements Iterator, ArrayAccess, Countable, JsonSerializable
      * @param callable $cb Function to filter out on false
      * @return static
      */
-    public function filter(callable $cb)
+    public function filter(callable $cb): self
     {
         $count = count($this->sfa);
         $sfa = new SplFixedArray($count);
@@ -119,7 +119,7 @@ class ImmArray implements Iterator, ArrayAccess, Countable, JsonSerializable
      * @param string $secondToken If set, $token on left $secondToken on right
      * @return string
      */
-    public function join($token = ',', $secondToken = null)
+    public function join(string $token = ',', string $secondToken = null): string
     {
         $ret = '';
         if ($secondToken) {
@@ -146,7 +146,7 @@ class ImmArray implements Iterator, ArrayAccess, Countable, JsonSerializable
      * @param int $end End index of slice
      * @return static
      */
-    public function slice($begin = 0, $end = null)
+    public function slice(int $begin = 0, int $end = null): self
     {
         $it = new SliceIterator($this->sfa, $begin, $end);
         return new static($it);
@@ -155,20 +155,13 @@ class ImmArray implements Iterator, ArrayAccess, Countable, JsonSerializable
     /**
      * Concat to the end of this array
      *
-     * @param Traversable,...
-     * @return static
+     * @param ImmArray,... $ias One or more immutable array to concat to end
+     * @return ImmArray
      */
-    public function concat()
+    public function concat(ImmArray ...$ias): self
     {
-        $args = func_get_args();
-        array_unshift($args, $this->sfa);
-
-        // Concat this iterator, and variadic args
-        $class = new ReflectionClass('Qaribou\Iterator\ConcatIterator');
-        $concatIt = $class->newInstanceArgs($args);
-
         // Create as new immutable's iterator
-        return new static($concatIt);
+        return new static(new ConcatIterator($this, ...$ias));
     }
 
     /**
@@ -182,6 +175,7 @@ class ImmArray implements Iterator, ArrayAccess, Countable, JsonSerializable
         foreach ($this->sfa as $i => $el) {
             if ($cb($el, $i, $this)) return $el;
         }
+        return null;
     }
 
     /**
@@ -190,14 +184,9 @@ class ImmArray implements Iterator, ArrayAccess, Countable, JsonSerializable
      * @param callable $cb The sort callback
      * @return static
      */
-    public function sort(callable $cb = null)
+    public function sort(callable $cb = null): self
     {
         if ($cb) {
-            // Custom searches can be easier on memory, but run absurdly slow
-            // pre PHP7
-            if (PHP_MAJOR_VERSION < 7) {
-                return $this->arraySort($cb);
-            }
             return $this->mergeSort($cb);
         }
         return $this->arraySort();
@@ -212,7 +201,7 @@ class ImmArray implements Iterator, ArrayAccess, Countable, JsonSerializable
      * @param SplHeap $heap The heap to run for sorting
      * @return static
      */
-    public function sortHeap(SplHeap $heap)
+    public function sortHeap(SplHeap $heap): self
     {
         foreach ($this as $item) {
             $heap->insert($item);
@@ -225,7 +214,7 @@ class ImmArray implements Iterator, ArrayAccess, Countable, JsonSerializable
      *
      * @return static
      */
-    public static function fromItems(Traversable $arr, callable $cb = null)
+    public static function fromItems(Traversable $arr, callable $cb = null): self
     {
         // We can only do it this way if we can count it
         if ($arr instanceof Countable) {
@@ -252,12 +241,12 @@ class ImmArray implements Iterator, ArrayAccess, Countable, JsonSerializable
      *
      * @return static
      */
-    public static function fromArray(array $arr)
+    public static function fromArray(array $arr): self
     {
         return new static(SplFixedArray::fromArray($arr));
     }
 
-    public function toArray()
+    public function toArray(): array
     {
         return $this->sfa->toArray();
     }
@@ -265,7 +254,7 @@ class ImmArray implements Iterator, ArrayAccess, Countable, JsonSerializable
     /**
      * Countable
      */
-    public function count()
+    public function count(): int
     {
         return count($this->sfa);
     }
@@ -301,7 +290,7 @@ class ImmArray implements Iterator, ArrayAccess, Countable, JsonSerializable
     /**
      * ArrayAccess
      */
-    public function offsetExists($offset)
+    public function offsetExists($offset): boolean
     {
         return $this->sfa->offsetExists($offset);
     }
@@ -324,7 +313,7 @@ class ImmArray implements Iterator, ArrayAccess, Countable, JsonSerializable
     /**
      * JsonSerializable
      */
-    public function jsonSerialize()
+    public function jsonSerialize(): array
     {
         return $this->sfa->toArray();
     }
@@ -333,11 +322,12 @@ class ImmArray implements Iterator, ArrayAccess, Countable, JsonSerializable
      * Perform a bottom-up, non-recursive, in-place mergesort.
      * Efficient for very-large objects, and written without recursion
      * since PHP isn't well optimized for large recursion stacks.
+     * TODO: Move this out into a trait
      *
      * @param callable $cb The callback for comparison
      * @return static
      */
-    protected function mergeSort(callable $cb)
+    protected function mergeSort(callable $cb): self
     {
         $count = count($this);
         $sfa = $this->sfa;
@@ -380,11 +370,12 @@ class ImmArray implements Iterator, ArrayAccess, Countable, JsonSerializable
 
     /**
      * A classic quickSort - great for inplace sorting a big fixed array
+     * TODO: Move this out into a trait
      *
      * @param callable $cb The callback for comparison
      * @return static
      */
-    protected function quickSort(callable $cb)
+    protected function quickSort(callable $cb): self
     {
         $sfa = new SplFixedArray(count($this));
 
@@ -399,14 +390,10 @@ class ImmArray implements Iterator, ArrayAccess, Countable, JsonSerializable
         // Keep popping from stack while is not empty
         while (!$stack->isEmpty()) {
             // Pop h and l
-            list($lo, $hi) = $stack->pop();
+            [$lo, $hi] = $stack->pop();
 
-            if ($first) {
-                // Start our partition iterator on the original data
-                $partition = new LimitIterator($this->sfa, $lo, $hi - $lo);
-            } else {
-                $partition = new LimitIterator($sfa, $lo, $hi - $lo);
-            }
+            // Start our partition iterator on the original data
+            $partition = new LimitIterator($first ? $this->sfa : $sfa, $lo, $hi - $lo);
             $ii = $partition->getInnerIterator();
 
             // Set pivot element at its correct position in sorted array
@@ -455,7 +442,7 @@ class ImmArray implements Iterator, ArrayAccess, Countable, JsonSerializable
      * @param callable $cb The comparison callback
      * @return static
      */
-    protected function heapSort(callable $cb)
+    protected function heapSort(callable $cb): self
     {
         $h = new CallbackHeap($cb);
         foreach ($this as $el) {
@@ -471,7 +458,7 @@ class ImmArray implements Iterator, ArrayAccess, Countable, JsonSerializable
      * @param callable $cb The callback for comparison
      * @return static
      */
-    protected function arraySort(callable $cb = null)
+    protected function arraySort(callable $cb = null): self
     {
         $ar = $this->toArray();
         if ($cb) {
