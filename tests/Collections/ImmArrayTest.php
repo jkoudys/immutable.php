@@ -4,9 +4,8 @@
  */
 
 use Qaribou\Collection\ImmArray;
-use Qaribou\Collection\CallbackHeap;
 
-class ImmArrayTest extends PHPUnit_Framework_TestCase
+class ImmArrayTest extends \PHPUnit_Framework_TestCase
 {
     public function testMap()
     {
@@ -52,7 +51,7 @@ class ImmArrayTest extends PHPUnit_Framework_TestCase
 
         // Heap sort
         $heapSorted = $unsorted->sortHeap(new BasicHeap());
-        $this->assertSame($sorted->toArray(), ['a', 'b', 'c', 'd', 'e', 'f'], 'Heap sort failed.');
+        $this->assertSame($heapSorted->toArray(), ['a', 'b', 'c', 'd', 'e', 'f'], 'Heap sort failed.');
     }
 
     public function testSlice()
@@ -63,6 +62,18 @@ class ImmArrayTest extends PHPUnit_Framework_TestCase
 
         $this->assertCount(3, $firstThree);
         $this->assertSame([1, 2, 3], $firstThree->toArray());
+    }
+
+    public function testFromItemsMap()
+    {
+      $numberSet = ImmArray::fromItems(
+        new ArrayIterator([1, 2, 3]),
+        function ($el) {
+          return $el * 2;
+        }
+      );
+
+      $this->assertSame([2, 4, 6], $numberSet->toArray());
     }
 
     public function testReduce()
@@ -92,14 +103,63 @@ class ImmArrayTest extends PHPUnit_Framework_TestCase
         $this->assertSame([1, 2, 3, 4, 5, 6], $concatted->toArray());
     }
 
+    public function testIncludes()
+    {
+        $testClass = new \stdClass();
+
+        $set = ImmArray::fromArray([1, 'string', false, $testClass]);
+
+        $this->assertFalse($set->includes(0));
+        $this->assertFalse($set->includes(true));
+        $this->assertTrue($set->includes(1));
+        $this->assertTrue($set->includes(false));
+        $this->assertTrue($set->includes('string'));
+        $this->assertTrue($set->includes($testClass));
+        $this->assertfalse($set->includes(new \stdClass()));
+    }
+
+    public function testUnique()
+    {
+        $testClass = new \stdClass();
+        $testClass2 = new \stdClass();
+
+        $set = ImmArray::fromArray([
+            1,
+            ['foo' => 'bar'],
+            [],
+            'a',
+            'b',
+            $testClass,
+            'a',
+            [],
+            $testClass,
+            ['foo' => 'bar'],
+            $testClass2,
+            'c'
+        ]);
+
+        $uniqueArray = [
+            1,
+            ['foo' => 'bar'],
+            [],
+            'a',
+            'b',
+            $testClass,
+            $testClass2,
+            'c'
+        ];
+
+        $this->assertSame($uniqueArray, $set->unique()->toArray());
+    }
+
     public function testLoadBigSet()
     {
         $startMem = ini_get('memory_limit');
         ini_set('memory_limit', '50M');
         // Big
-        $bigSet = ImmArray::fromArray(array_map(function($el) { return md5($el); }, range(0, 200000)));
+        $bigSet = ImmArray::fromItems(new MD5Iterator(200000));
 
-        $this->assertCount(200001, $bigSet);
+        $this->assertCount(200000, $bigSet);
         ini_set('memory_limit', $startMem);
     }
 }
@@ -110,5 +170,33 @@ class BasicHeap extends \SplHeap
     public function compare($a, $b)
     {
         return strcmp($a, $b);
+    }
+}
+
+// A basic iterator for testing loading large sets
+class MD5Iterator implements Iterator, Countable {
+    protected $count;
+    protected $position = 0;
+
+    public function __construct($count = 0) {
+        $this->count = $count;
+    }
+    function rewind() {
+        $this->position = 0;
+    }
+    function current() {
+        return md5($this->position);
+    }
+    function key() {
+        return $this->position;
+    }
+    function next() {
+        ++$this->position;
+    }
+    function valid() {
+        return $this->position < $this->count;
+    }
+    function count() {
+        return $this->count;
     }
 }

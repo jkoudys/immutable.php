@@ -13,7 +13,6 @@
 
 namespace Qaribou\Collection;
 
-use Qaribou\Collection\CallbackHeap;
 use Qaribou\Iterator\SliceIterator;
 use Qaribou\Iterator\ConcatIterator;
 use SplFixedArray;
@@ -23,11 +22,9 @@ use LimitIterator;
 use Iterator;
 use ArrayAccess;
 use Countable;
-use CallbackFilterIterator;
 use JsonSerializable;
 use RuntimeException;
 use Traversable;
-use ReflectionClass;
 
 class ImmArray implements Iterator, ArrayAccess, Countable, JsonSerializable
 {
@@ -48,14 +45,14 @@ class ImmArray implements Iterator, ArrayAccess, Countable, JsonSerializable
      * Map elements to a new ImmArray via a callback
      *
      * @param callable $cb Function to map new data
-     * @return ImmArray
+     * @return static
      */
     public function map(callable $cb): self
     {
         $count = count($this);
         $sfa = new SplFixedArray($count);
         for ($i = 0; $i < $count; $i++) {
-            $sfa[$i] = $cb($this->sfa[$i]);
+            $sfa[$i] = $cb($this->sfa[$i], $i, $this);
         }
         return new static($sfa);
     }
@@ -67,7 +64,7 @@ class ImmArray implements Iterator, ArrayAccess, Countable, JsonSerializable
      * Named walk for historic reasons - forEach is reserved in PHP
      *
      * @param callable $cb Function to call on each element
-     * @return ImmArray
+     * @return static
      */
     public function walk(callable $cb): self
     {
@@ -81,7 +78,7 @@ class ImmArray implements Iterator, ArrayAccess, Countable, JsonSerializable
      * Filter out elements
      *
      * @param callable $cb Function to filter out on false
-     * @return ImmArray
+     * @return static
      */
     public function filter(callable $cb): self
     {
@@ -147,7 +144,7 @@ class ImmArray implements Iterator, ArrayAccess, Countable, JsonSerializable
      *
      * @param int $begin Start index of slice
      * @param int $end End index of slice
-     * @return ImmArray
+     * @return static
      */
     public function slice(int $begin = 0, int $end = null): self
     {
@@ -168,18 +165,31 @@ class ImmArray implements Iterator, ArrayAccess, Countable, JsonSerializable
     }
 
     /**
+     * Find a single element
+     *
+     * @param callable $cb The test to run on each element
+     * @return mixed The element we found
+     */
+    public function find(callable $cb)
+    {
+        foreach ($this->sfa as $i => $el) {
+            if ($cb($el, $i, $this)) return $el;
+        }
+        return null;
+    }
+
+    /**
      * Return a new sorted ImmArray
      *
      * @param callable $cb The sort callback
-     * @return ImmArray
+     * @return static
      */
     public function sort(callable $cb = null): self
     {
         if ($cb) {
             return $this->mergeSort($cb);
-        } else {
-            return $this->arraySort();
         }
+        return $this->arraySort();
     }
 
     /**
@@ -189,7 +199,7 @@ class ImmArray implements Iterator, ArrayAccess, Countable, JsonSerializable
      * optimized space.
      *
      * @param SplHeap $heap The heap to run for sorting
-     * @return ImmArray
+     * @return static
      */
     public function sortHeap(SplHeap $heap): self
     {
@@ -202,28 +212,34 @@ class ImmArray implements Iterator, ArrayAccess, Countable, JsonSerializable
     /**
      * Factory for building ImmArrays from any traversable
      *
-     * @return ImmArray
+     * @return static
      */
-    public static function fromItems(Traversable $arr): self
+    public static function fromItems(Traversable $arr, callable $cb = null): self
     {
-        // Easiest if we know the size of the traversable upfront
+        // We can only do it this way if we can count it
         if ($arr instanceof Countable) {
             $sfa = new SplFixedArray(count($arr));
             foreach ($arr as $i => $el) {
-                $sfa[$i] = $el;
+                // Apply a mapping function if available
+                if ($cb) $sfa[$i] = $cb($el, $i);
+                else $sfa[$i] = $el;
             }
 
             return new static($sfa);
-        } else {
-            // We don't know the size, so we'll need to load from array
-            return static::fromArray(iterator_to_array($arr));
         }
+
+        // If we can't count it, it's simplest to iterate into an array first
+        $asArray = iterator_to_array($arr);
+        if ($cb) {
+          return static::fromArray(array_map($cb, $asArray, array_keys($asArray)));
+        }
+        return static::fromArray($asArray);
     }
 
     /**
      * Build from an array
      *
-     * @return ImmArray
+     * @return static
      */
     public static function fromArray(array $arr): self
     {
@@ -306,9 +322,10 @@ class ImmArray implements Iterator, ArrayAccess, Countable, JsonSerializable
      * Perform a bottom-up, non-recursive, in-place mergesort.
      * Efficient for very-large objects, and written without recursion
      * since PHP isn't well optimized for large recursion stacks.
+     * TODO: Move this out into a trait
      *
      * @param callable $cb The callback for comparison
-     * @return ImmArray
+     * @return static
      */
     protected function mergeSort(callable $cb): self
     {
@@ -353,9 +370,10 @@ class ImmArray implements Iterator, ArrayAccess, Countable, JsonSerializable
 
     /**
      * A classic quickSort - great for inplace sorting a big fixed array
+     * TODO: Move this out into a trait
      *
      * @param callable $cb The callback for comparison
-     * @return ImmArray
+     * @return static
      */
     protected function quickSort(callable $cb): self
     {
@@ -372,14 +390,10 @@ class ImmArray implements Iterator, ArrayAccess, Countable, JsonSerializable
         // Keep popping from stack while is not empty
         while (!$stack->isEmpty()) {
             // Pop h and l
-            list($lo, $hi) = $stack->pop();
+            [$lo, $hi] = $stack->pop();
 
-            if ($first) {
-                // Start our partition iterator on the original data
-                $partition = new LimitIterator($this->sfa, $lo, $hi - $lo);
-            } else {
-                $partition = new LimitIterator($sfa, $lo, $hi - $lo);
-            }
+            // Start our partition iterator on the original data
+            $partition = new LimitIterator($first ? $this->sfa : $sfa, $lo, $hi - $lo);
             $ii = $partition->getInnerIterator();
 
             // Set pivot element at its correct position in sorted array
@@ -393,12 +407,11 @@ class ImmArray implements Iterator, ArrayAccess, Countable, JsonSerializable
                     $temp = $sfa[$i];
                     $sfa[$i] = $el;
                     $sfa[$j] = $temp;
-                } else if ($first) {
+                } elseif ($first) {
                     $sfa[$j] = $el;
                 }
             }
             $sfa[$hi] = $x;
-            var_dump($sfa);
 
             // Set the pivot element
             $pivot = $i + 1;
@@ -419,7 +432,7 @@ class ImmArray implements Iterator, ArrayAccess, Countable, JsonSerializable
             }
         }
 
-        return new static($imm);
+        return new static($sfa);
     }
 
     /**
@@ -427,7 +440,7 @@ class ImmArray implements Iterator, ArrayAccess, Countable, JsonSerializable
      * Can be efficient for sorting large stored objects.
      *
      * @param callable $cb The comparison callback
-     * @return ImmArray
+     * @return static
      */
     protected function heapSort(callable $cb): self
     {
@@ -443,7 +456,7 @@ class ImmArray implements Iterator, ArrayAccess, Countable, JsonSerializable
      * Fallback behaviour to use the builtin array sort functions
      *
      * @param callable $cb The callback for comparison
-     * @return ImmArray
+     * @return static
      */
     protected function arraySort(callable $cb = null): self
     {
@@ -454,5 +467,45 @@ class ImmArray implements Iterator, ArrayAccess, Countable, JsonSerializable
             sort($ar);
         }
         return static::fromArray($ar);
+    }
+
+    /**
+     * Check if element exists in collection
+     *
+     * @param $element
+     * @return bool
+     */
+    public function includes($element)
+    {
+        foreach ($this as $el) {
+            if ($el === $element) return true;
+        }
+        return false;
+    }
+
+    /**
+     * Filter out non-unique elements
+     *
+     * @return static
+     */
+    public function unique()
+    {
+        $count = count($this->sfa);
+        $unique = new SplFixedArray($count);
+        $newCount = 0;
+        $lastUnique = null;
+
+        foreach ($this->sfa as $el) {
+            for($i = $newCount; $i >= 0; $i--) {
+                // going from back to forward to find sequence of duplicates faster
+                if ($unique[$i] === $el) {
+                    continue 2;
+                }
+            }
+            $unique[$newCount++] = $el;
+        }
+
+        $unique->setSize($newCount);
+        return new static($unique);
     }
 }
